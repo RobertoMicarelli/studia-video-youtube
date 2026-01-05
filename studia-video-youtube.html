@@ -933,6 +933,12 @@ Lo sviluppo responsabile dell'AI richiede attenzione a:
                 await new Promise(resolve => setTimeout(resolve, 500));
                 
                 updateProgress(75, 3, `💾 Salvataggio nella cartella "${category}"...`);
+                
+                // Verifica autenticazione prima di salvare
+                if (!googleAccessToken) {
+                    throw new Error('Autenticazione Google richiesta. Clicca su "Accedi con Google" prima di generare la dispensa.');
+                }
+                
                 const driveResult = await saveToGoogleDrive(dispensa, videoData.title, category);
                 currentVideoData.driveResult = driveResult;
 
@@ -969,19 +975,39 @@ Lo sviluppo responsabile dell'AI richiede attenzione a:
             } catch (error) {
                 console.error('Errore durante l\'elaborazione:', error);
                 const errorMessage = error.message || 'Errore durante l\'elaborazione. Riprova più tardi.';
-                document.getElementById('statusMessage').innerHTML = `
-                    <p class="text-sm text-red-800 text-center font-medium">
-                        ❌ ${errorMessage}
-                    </p>
-                `;
                 
-                // Se il video è troppo lungo, mostra messaggio più dettagliato
-                if (errorMessage.includes('troppo lungo') || errorMessage.includes('4 ore')) {
+                // Reset progress bar
+                updateProgress(0, 1, '');
+                
+                // Gestione errori specifici
+                if (errorMessage.includes('Autenticazione Google') || errorMessage.includes('autenticazione')) {
                     document.getElementById('statusMessage').innerHTML = `
-                        <div class="text-sm text-red-800 text-center">
+                        <div class="text-sm text-red-800 text-center p-4 bg-red-50 border border-red-200 rounded-lg">
+                            <p class="font-bold mb-2">❌ Autenticazione Google Richiesta</p>
+                            <p class="mb-3">Per salvare la dispensa su Google Drive, devi prima autenticarti con Google.</p>
+                            <button 
+                                onclick="authenticateGoogle()"
+                                class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-medium transition-colors"
+                            >
+                                🔐 Accedi con Google
+                            </button>
+                            <p class="text-xs text-gray-600 mt-3">Dopo l'autenticazione, puoi rigenerare la dispensa.</p>
+                        </div>
+                    `;
+                } else if (errorMessage.includes('troppo lungo') || errorMessage.includes('4 ore')) {
+                    document.getElementById('statusMessage').innerHTML = `
+                        <div class="text-sm text-red-800 text-center p-4 bg-red-50 border border-red-200 rounded-lg">
                             <p class="font-bold mb-2">❌ Video troppo lungo</p>
                             <p class="mb-2">Il limite massimo è di <strong>4 ore (240 minuti)</strong>.</p>
                             <p class="text-xs text-gray-600">Per favore, usa un video più corto o dividi il contenuto in più parti.</p>
+                        </div>
+                    `;
+                } else {
+                    document.getElementById('statusMessage').innerHTML = `
+                        <div class="text-sm text-red-800 text-center p-4 bg-red-50 border border-red-200 rounded-lg">
+                            <p class="font-bold mb-2">❌ Errore durante l'elaborazione</p>
+                            <p class="mb-2">${errorMessage}</p>
+                            <p class="text-xs text-gray-600 mt-2">Controlla la console del browser (F12) per maggiori dettagli.</p>
                         </div>
                     `;
                 }
