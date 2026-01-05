@@ -20,7 +20,53 @@ export default async function handler(req, res) {
       return res.status(500).json({ error: 'Google Drive folder ID non configurato' });
     }
 
-    // Crea il documento Google Docs
+    // Trova o crea cartella per categoria
+    const categoryName = category || 'FORMAZIONE';
+    let categoryFolderId = null;
+
+    // Cerca se esiste già una cartella con questo nome
+    const searchResponse = await fetch(
+      `https://www.googleapis.com/drive/v3/files?q=name='${encodeURIComponent(categoryName)}' and '${driveFolderId}' in parents and mimeType='application/vnd.google-apps.folder' and trashed=false`,
+      {
+        headers: {
+          'Authorization': `Bearer ${accessToken}`
+        }
+      }
+    );
+
+    if (searchResponse.ok) {
+      const searchData = await searchResponse.json();
+      if (searchData.files && searchData.files.length > 0) {
+        categoryFolderId = searchData.files[0].id;
+      }
+    }
+
+    // Se non esiste, creala
+    if (!categoryFolderId) {
+      const createFolderResponse = await fetch('https://www.googleapis.com/drive/v3/files', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${accessToken}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          name: categoryName,
+          parents: [driveFolderId],
+          mimeType: 'application/vnd.google-apps.folder'
+        })
+      });
+
+      if (createFolderResponse.ok) {
+        const folderData = await createFolderResponse.json();
+        categoryFolderId = folderData.id;
+      } else {
+        // Se fallisce la creazione, usa la cartella principale
+        console.warn('Errore creazione cartella categoria, uso cartella principale');
+        categoryFolderId = driveFolderId;
+      }
+    }
+
+    // Crea il documento Google Docs nella cartella categoria
     const createResponse = await fetch('https://www.googleapis.com/drive/v3/files', {
       method: 'POST',
       headers: {
@@ -28,8 +74,8 @@ export default async function handler(req, res) {
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({
-        name: `${title}.md`,
-        parents: [driveFolderId],
+        name: title,
+        parents: [categoryFolderId],
         mimeType: 'application/vnd.google-apps.document'
       })
     });
@@ -44,65 +90,39 @@ export default async function handler(req, res) {
     const file = await createResponse.json();
     const fileId = file.id;
 
-    // Converti il contenuto in formato Google Docs (HTML semplice)
-    const htmlContent = content
-      .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
-      .replace(/\n\n/g, '</p><p>')
-      .replace(/\n/g, '<br>');
-    
-    const fullHtml = `<p>${htmlContent}</p>`;
+    // Prepara il contenuto: rimuovi markdown e crea testo pulito
+    let textContent = content
+      .replace(/\*\*(.+?)\*\*/g, '$1') // Rimuovi **
+      .replace(/\*(.+?)\*/g, '$1') // Rimuovi *
+      .replace(/^#+\s*/gm, '') // Rimuovi # dai titoli
+      .trim();
 
-    // Aggiorna il contenuto del documento
-    const updateResponse = await fetch(
-      `https://www.googleapis.com/upload/drive/v3/files/${fileId}?uploadType=multipart`,
+    // Inserisci il testo nel documento usando Google Docs API
+    const insertRequest = {
+      requests: [{
+        insertText: {
+          location: { index: 1 },
+          text: textContent
+        }
+      }]
+    };
+
+    const insertResponse = await fetch(
+      `https://docs.googleapis.com/v1/documents/${fileId}:batchUpdate`,
       {
-        method: 'PATCH',
+        method: 'POST',
         headers: {
           'Authorization': `Bearer ${accessToken}`,
+          'Content-Type': 'application/json'
         },
-        body: (() => {
-          const boundary = '----WebKitFormBoundary' + Math.random().toString(36).substring(2);
-          const formData = [
-            `--${boundary}`,
-            'Content-Disposition: form-data; name="metadata"',
-            'Content-Type: application/json; charset=UTF-8',
-            '',
-            JSON.stringify({ name: `${title}.md` }),
-            `--${boundary}`,
-            'Content-Disposition: form-data; name="file"',
-            'Content-Type: text/html',
-            '',
-            fullHtml,
-            `--${boundary}--`
-          ].join('\r\n');
-          
-          return formData;
-        })()
+        body: JSON.stringify(insertRequest)
       }
     );
 
-    if (!updateResponse.ok) {
-      // Se l'upload multipart fallisce, prova con files.update
-      const simpleUpdate = await fetch(
-        `https://www.googleapis.com/drive/v3/files/${fileId}`,
-        {
-          method: 'PATCH',
-          headers: {
-            'Authorization': `Bearer ${accessToken}`,
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({
-            name: `${title}.md`
-          })
-        }
-      );
-      
-      if (!simpleUpdate.ok) {
-        const errorData = await updateResponse.json().catch(() => ({}));
-        return res.status(updateResponse.status).json({ 
-          error: `Errore aggiornamento documento: ${errorData.error?.message || updateResponse.statusText}` 
-        });
-      }
+    if (!insertResponse.ok) {
+      const errorData = await insertResponse.json().catch(() => ({}));
+      console.warn('Errore inserimento testo, documento creato ma vuoto:', errorData);
+      // Il documento è stato creato, anche se il contenuto non è stato inserito
     }
 
     const docUrl = `https://docs.google.com/document/d/${fileId}/edit`;
@@ -111,7 +131,8 @@ export default async function handler(req, res) {
       success: true,
       docUrl,
       docId: fileId,
-      category: category || 'FORMAZIONE'
+      category: categoryName,
+      categoryFolderId: categoryFolderId
     });
 
   } catch (error) {
@@ -122,4 +143,3 @@ export default async function handler(req, res) {
     });
   }
 }
-

@@ -125,13 +125,18 @@ Salvare automaticamente i documenti generati in Google Drive, organizzati per ca
 
 ### Passi per l'attivazione:
 
-#### 4.1 Abilita Google Drive API
+#### 4.1 Abilita Google Drive API e Google Docs API
 1. Nella Google Cloud Console
 2. Vai su **"API e servizi"** > **"Libreria"** (APIs & Services > Library)
 3. Nella barra di ricerca, cerca: `Google Drive API`
 4. Clicca sul risultato "Google Drive API"
 5. Clicca **"Abilita"** (Enable)
 6. ⏳ Attendi qualche secondo per l'attivazione
+7. Cerca anche: `Google Docs API`
+8. Clicca **"Abilita"** (Enable)
+9. ⏳ Attendi qualche secondo per l'attivazione
+
+⚠️ **IMPORTANTE**: Entrambe le API devono essere abilitate per la formattazione corretta dei documenti!
 
 #### 4.2 Crea credenziali OAuth 2.0
 

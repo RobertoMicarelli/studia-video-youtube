@@ -981,8 +981,19 @@ Lo sviluppo responsabile dell'AI richiede attenzione a:
                 // Step 4: Invio email e aggiornamento sheet
                 updateProgress(88, 4, '📧 Preparazione email di notifica...');
                 
-                const abstractMatch = dispensa.match(/ABSTRACT\n\n(.+?)\n\n/s);
-                const abstract = abstractMatch ? abstractMatch[1].trim() : 'Dispensa didattica generata da video YouTube';
+                // Estrai abstract con regex più robusta
+                let abstract = 'Dispensa didattica generata da video YouTube';
+                const abstractMatch1 = dispensa.match(/## 2\. ABSTRACT\s*\n\n(.+?)(?=\n\n##|\n\n###|$)/s);
+                const abstractMatch2 = dispensa.match(/ABSTRACT\s*\n\n(.+?)(?=\n\n##|\n\n###|$)/s);
+                const abstractMatch3 = dispensa.match(/\*\*ABSTRACT\*\*\s*\n\n(.+?)(?=\n\n##|\n\n###|$)/s);
+                
+                if (abstractMatch1) {
+                    abstract = abstractMatch1[1].trim().replace(/\*\*/g, '').replace(/\n/g, ' ').substring(0, 500);
+                } else if (abstractMatch2) {
+                    abstract = abstractMatch2[1].trim().replace(/\*\*/g, '').replace(/\n/g, ' ').substring(0, 500);
+                } else if (abstractMatch3) {
+                    abstract = abstractMatch3[1].trim().replace(/\*\*/g, '').replace(/\n/g, ' ').substring(0, 500);
+                }
                 
                 await sendEmail(driveResult.docUrl, url, abstract, videoData.title);
                 
