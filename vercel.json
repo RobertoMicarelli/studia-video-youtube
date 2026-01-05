@@ -1,23 +1,13 @@
 {
   "version": 2,
-  "builds": [
+  "rewrites": [
     {
-      "src": "studia-video-youtube.html",
-      "use": "@vercel/static"
+      "source": "/api/(.*)",
+      "destination": "/api/$1"
     },
     {
-      "src": "api/**/*.js",
-      "use": "@vercel/node"
-    }
-  ],
-  "routes": [
-    {
-      "src": "/api/(.*)",
-      "dest": "/api/$1"
-    },
-    {
-      "src": "/(.*)",
-      "dest": "/studia-video-youtube.html"
+      "source": "/(.*)",
+      "destination": "/studia-video-youtube.html"
     }
   ],
   "headers": [
