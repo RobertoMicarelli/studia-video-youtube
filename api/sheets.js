@@ -21,15 +21,24 @@ export default async function handler(req, res) {
     }
 
     // Prepara l'abstract (assicurati che non sia vuoto)
-    const abstractText = abstract && abstract.trim() ? abstract.trim() : 'Dispensa didattica generata da video YouTube';
+    console.log('=== GOOGLE SHEETS API - RICEZIONE DATI ===');
+    console.log('Abstract ricevuto (tipo):', typeof abstract);
+    console.log('Abstract ricevuto (valore):', abstract);
+    console.log('Abstract ricevuto (lunghezza):', abstract ? abstract.length : 0);
+    
+    const abstractText = abstract && abstract.trim() && abstract.trim() !== 'Dispensa didattica generata da video YouTube' 
+      ? abstract.trim() 
+      : (abstract && abstract.trim() ? abstract.trim() : 'Dispensa didattica generata da video YouTube');
     
     console.log('Google Sheets - Dati da inserire:', {
       timestamp,
       title: title.substring(0, 50),
       category,
       abstractLength: abstractText.length,
-      abstractPreview: abstractText.substring(0, 100)
+      abstractPreview: abstractText.substring(0, 200),
+      abstractFull: abstractText // Log completo per debug
     });
+    console.log('=== FINE LOG GOOGLE SHEETS API ===');
 
     // Aggiungi riga al foglio
     const response = await fetch(
