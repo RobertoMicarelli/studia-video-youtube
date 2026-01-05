@@ -90,8 +90,11 @@ export default async function handler(req, res) {
     const fileId = file.id;
 
     // Prepara il contenuto: converti markdown in testo formattato
-    // Rimuovi tutti i simboli markdown
+    // Rimuovi tutti i simboli markdown e tag H1/H2/H3
     let textContent = content
+      .replace(/H1:\s*/gi, '') // Rimuovi "H1:" o "h1:"
+      .replace(/H2:\s*/gi, '') // Rimuovi "H2:" o "h2:"
+      .replace(/H3:\s*/gi, '') // Rimuovi "H3:" o "h3:"
       .replace(/^#+\s+/gm, '') // Rimuovi # ## ### #### all'inizio delle righe
       .replace(/\*\*(.+?)\*\*/g, '$1') // Rimuovi ** (grassetto)
       .replace(/\*(.+?)\*/g, '$1') // Rimuovi * (corsivo)

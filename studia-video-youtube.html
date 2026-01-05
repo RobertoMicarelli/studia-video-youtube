@@ -384,7 +384,7 @@ STRUTTURA RICHIESTA
 1. METADATI DEL VIDEO
 **Autore:** [Nome del canale/creatore]
 **Titolo:** [Titolo del video]
-**URL YouTube:** [Link al video]
+**URL YouTube:** {{VIDEO_URL}}
 **Temi Trattati:** #tema1 #tema2 #tema3 #tema4 #tema5
 **Data di elaborazione:** ${new Date().toLocaleDateString('it-IT')}
 
@@ -398,10 +398,10 @@ Scrivi un abstract di 3-4 righe che sintetizzi:
 3. CORPO DELLA DISPENSA
 FORMATTAZIONE RICHIESTA:
 * Suddividi il contenuto in sezioni tematiche chiare
-* Usa titoli e sottotitoli gerarchici (H1, H2, H3)
-* Evidenzia i concetti chiave in grassetto
-* Crea elenchi puntati per informazioni strutturate
-* Inserisci box informativi per definizioni importanti
+* Usa titoli e sottotitoli gerarchici con markdown (## per H1, ### per H2, #### per H3)
+* NON scrivere "H1:", "H2:", "H3:" nel testo, usa solo i simboli markdown ## ### ####
+* Evidenzia i concetti chiave in grassetto con **testo**
+* Crea elenchi puntati per informazioni strutturate con - o *
 * Mantieni paragrafi di lunghezza media (3-5 righe)
 
 CRITERI DI ELABORAZIONE:
@@ -504,6 +504,7 @@ TRASCRIZIONE:
             }
 
             const prompt = PROMPT_TEMPLATE
+                .replace('{{VIDEO_URL}}', videoUrl)
                 .replace('{{TRANSCRIPT}}', transcript);
 
             try {
@@ -984,12 +985,15 @@ Lo sviluppo responsabile dell'AI richiede attenzione a:
                 // Estrai abstract con regex più robusta
                 let abstract = 'Dispensa didattica generata da video YouTube';
                 
-                // Prova diversi pattern per trovare l'abstract
+                // Prova diversi pattern per trovare l'abstract (dopo "2. ABSTRACT" o "## 2. ABSTRACT")
                 const patterns = [
+                    // Pattern principale: ## 2. ABSTRACT seguito da testo fino alla prossima sezione
+                    /##\s*2\.\s*ABSTRACT\s*\n\n(.+?)(?=\n\n##\s*3\.|$)/s,
+                    /2\.\s*ABSTRACT\s*\n\n(.+?)(?=\n\n##\s*3\.|$)/s,
+                    /##\s*ABSTRACT\s*\n\n(.+?)(?=\n\n##\s*3\.|$)/s,
+                    /ABSTRACT\s*\n\n(.+?)(?=\n\n##\s*3\.|$)/s,
+                    // Pattern alternativi
                     /##\s*2\.\s*ABSTRACT\s*\n\n(.+?)(?=\n\n##|\n\n###|$)/s,
-                    /##\s*ABSTRACT\s*\n\n(.+?)(?=\n\n##|\n\n###|$)/s,
-                    /ABSTRACT\s*\n\n(.+?)(?=\n\n##|\n\n###|$)/s,
-                    /\*\*ABSTRACT\*\*\s*\n\n(.+?)(?=\n\n##|\n\n###|$)/s,
                     /2\.\s*ABSTRACT\s*\n\n(.+?)(?=\n\n##|\n\n###|$)/s
                 ];
                 
@@ -1003,14 +1007,21 @@ Lo sviluppo responsabile dell'AI richiede attenzione a:
                             .replace(/#/g, '') // Rimuovi #
                             .replace(/\n+/g, ' ') // Sostituisci newline con spazio
                             .replace(/\s+/g, ' ') // Normalizza spazi multipli
-                            .substring(0, 1000); // Limita a 1000 caratteri
-                        break;
+                            .trim();
+                        
+                        // Verifica che non sia vuoto o troppo corto
+                        if (abstract.length > 20) {
+                            abstract = abstract.substring(0, 1000); // Limita a 1000 caratteri
+                            console.log('Abstract estratto con successo:', abstract.substring(0, 100) + '...');
+                            break;
+                        }
                     }
                 }
                 
                 // Se non trovato, usa fallback
-                if (abstract === 'Dispensa didattica generata da video YouTube') {
+                if (abstract === 'Dispensa didattica generata da video YouTube' || abstract.length < 20) {
                     console.warn('Abstract non trovato nella dispensa, uso fallback');
+                    console.log('Dispensa preview:', dispensa.substring(0, 500));
                 }
                 
                 await sendEmail(driveResult.docUrl, url, abstract, videoData.title);
