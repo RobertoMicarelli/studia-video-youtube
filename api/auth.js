@@ -119,8 +119,23 @@ export default async function handler(req, res) {
 
       const tokens = await tokenResponse.json();
 
+      // Salva anche refresh_token se disponibile (per future implementazioni)
+      const tokenData = {
+        access_token: tokens.access_token,
+        refresh_token: tokens.refresh_token || null,
+        expires_in: tokens.expires_in || 3600,
+        token_type: tokens.token_type || 'Bearer'
+      };
+
       // Reindirizza alla pagina principale con il token
-      return res.redirect(`/?token=${tokens.access_token}`);
+      // Passa anche refresh_token e expires_in come parametri URL (verranno salvati in localStorage)
+      const tokenParams = new URLSearchParams({
+        token: tokenData.access_token,
+        expires_in: tokenData.expires_in,
+        ...(tokenData.refresh_token && { refresh_token: tokenData.refresh_token })
+      });
+      
+      return res.redirect(`/?${tokenParams.toString()}`);
 
     } catch (error) {
       console.error('Errore OAuth callback:', error);

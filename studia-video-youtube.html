@@ -368,12 +368,40 @@
         const urlParams = new URLSearchParams(window.location.search);
         if (urlParams.get('token')) {
             googleAccessToken = urlParams.get('token');
+            const expiresIn = parseInt(urlParams.get('expires_in') || '3600'); // Default 1 ora
+            const refreshToken = urlParams.get('refresh_token');
+            
+            // Calcola timestamp di scadenza
+            const expiresAt = Date.now() + (expiresIn * 1000);
+            
+            // Salva in localStorage
+            localStorage.setItem('googleAccessToken', googleAccessToken);
+            localStorage.setItem('googleTokenExpiresAt', expiresAt.toString());
+            if (refreshToken) {
+                localStorage.setItem('googleRefreshToken', refreshToken);
+            }
+            
             // Rimuovi token dall'URL per sicurezza
             window.history.replaceState({}, document.title, window.location.pathname);
-            localStorage.setItem('googleAccessToken', googleAccessToken);
         } else {
             // Prova a recuperare da localStorage
             googleAccessToken = localStorage.getItem('googleAccessToken');
+            const expiresAt = localStorage.getItem('googleTokenExpiresAt');
+            
+            // Verifica se il token è scaduto
+            if (googleAccessToken && expiresAt) {
+                const now = Date.now();
+                const expirationTime = parseInt(expiresAt);
+                
+                if (now >= expirationTime) {
+                    // Token scaduto, rimuovilo
+                    console.warn('Token Google scaduto, richiesta nuova autenticazione');
+                    googleAccessToken = null;
+                    localStorage.removeItem('googleAccessToken');
+                    localStorage.removeItem('googleTokenExpiresAt');
+                    localStorage.removeItem('googleRefreshToken');
+                }
+            }
         }
 
         // Prompt per OpenAI (modificato e ottimizzato)
@@ -783,7 +811,24 @@ Lo sviluppo responsabile dell'AI richiede attenzione a:
 
                 if (!response.ok) {
                     const error = await response.json();
-                    throw new Error(error.error || 'Errore salvataggio Google Drive');
+                    const errorMessage = error.error || 'Errore salvataggio Google Drive';
+                    
+                    // Rileva se il token è scaduto o non valido
+                    if (response.status === 401 || 
+                        errorMessage.includes('invalid authentication credentials') ||
+                        errorMessage.includes('Invalid Credentials') ||
+                        errorMessage.includes('unauthorized')) {
+                        // Token scaduto o non valido
+                        console.warn('Token Google scaduto o non valido, richiesta nuova autenticazione');
+                        googleAccessToken = null;
+                        localStorage.removeItem('googleAccessToken');
+                        localStorage.removeItem('googleTokenExpiresAt');
+                        localStorage.removeItem('googleRefreshToken');
+                        updateAuthStatus();
+                        throw new Error('La sessione Google è scaduta. Per favore, esegui nuovamente il login con Google.');
+                    }
+                    
+                    throw new Error(errorMessage);
                 }
 
                 const data = await response.json();
@@ -854,8 +899,25 @@ Lo sviluppo responsabile dell'AI richiede attenzione a:
 
                 if (!response.ok) {
                     const error = await response.json();
+                    const errorMessage = error.error || 'Errore aggiornamento sheet';
+                    
+                    // Rileva se il token è scaduto o non valido
+                    if (response.status === 401 || 
+                        errorMessage.includes('invalid authentication credentials') ||
+                        errorMessage.includes('Invalid Credentials') ||
+                        errorMessage.includes('unauthorized')) {
+                        // Token scaduto o non valido
+                        console.warn('Token Google scaduto durante aggiornamento sheet');
+                        googleAccessToken = null;
+                        localStorage.removeItem('googleAccessToken');
+                        localStorage.removeItem('googleTokenExpiresAt');
+                        localStorage.removeItem('googleRefreshToken');
+                        updateAuthStatus();
+                        return { success: false, error: 'La sessione Google è scaduta. Per favore, esegui nuovamente il login.' };
+                    }
+                    
                     console.error('Errore aggiornamento sheet:', error);
-                    return { success: false, error: error.error };
+                    return { success: false, error: errorMessage };
                 }
 
                 const result = await response.json();
@@ -882,6 +944,8 @@ Lo sviluppo responsabile dell'AI richiede attenzione a:
                 authButton.onclick = () => {
                     googleAccessToken = null;
                     localStorage.removeItem('googleAccessToken');
+                    localStorage.removeItem('googleTokenExpiresAt');
+                    localStorage.removeItem('googleRefreshToken');
                     updateAuthStatus();
                 };
                 authButton.className = 'px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg text-sm font-medium transition-colors';
