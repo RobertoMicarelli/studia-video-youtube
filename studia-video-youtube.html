@@ -1019,6 +1019,10 @@ Lo sviluppo responsabile dell'AI richiede attenzione a:
                 await new Promise(resolve => setTimeout(resolve, 500));
                 
                 updateProgress(96, 4, '📊 Aggiornamento registro Google Sheets...');
+                
+                // Debug: verifica che l'abstract sia stato estratto
+                console.log('Abstract estratto:', abstract.substring(0, 100) + '...');
+                
                 await updateGoogleSheet({
                     timestamp: new Date().toISOString(),
                     title: videoData.title,
