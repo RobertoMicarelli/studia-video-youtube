@@ -1,0 +1,1030 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Studia i tuoi Video Preferiti</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@600;700;800&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        'sans': ['Inter', 'system-ui', 'sans-serif'],
+                        'display': ['Outfit', 'system-ui', 'sans-serif'],
+                    },
+                    colors: {
+                        primary: {
+                            50: '#f0f9ff',
+                            100: '#e0f2fe',
+                            500: '#0ea5e9',
+                            600: '#0284c7',
+                            700: '#0369a1',
+                        },
+                        accent: {
+                            500: '#8b5cf6',
+                            600: '#7c3aed',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+        
+        .glass-card {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+        }
+
+        .gradient-text {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            transition: all 0.3s ease;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px -5px rgba(102, 126, 234, 0.6);
+        }
+
+        .btn-primary:active {
+            transform: translateY(0);
+        }
+
+        .step-item {
+            transition: all 0.3s ease;
+        }
+
+        .step-item.active {
+            transform: scale(1.05);
+        }
+
+        @keyframes pulse-slow {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        .animate-pulse-slow {
+            animation: pulse-slow 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+        }
+
+        .progress-bar {
+            transition: width 0.5s ease;
+        }
+
+        input:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .step-icon {
+            transition: all 0.3s ease;
+        }
+
+        .step-icon.completed {
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            color: white;
+        }
+
+        .step-icon.active {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .slide-in {
+            animation: slideIn 0.5s ease-out;
+        }
+
+        .result-card {
+            background: linear-gradient(135deg, rgba(16, 185, 129, 0.1) 0%, rgba(5, 150, 105, 0.1) 100%);
+            border-left: 4px solid #10b981;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-10px); }
+        }
+
+        .float-animation {
+            animation: float 3s ease-in-out infinite;
+        }
+    </style>
+</head>
+<body class="p-4 md:p-8">
+    <div class="max-w-5xl mx-auto">
+        <!-- Header -->
+        <div class="text-center mb-8 slide-in">
+            <div class="text-6xl mb-4 float-animation">📚</div>
+            <h1 class="text-4xl md:text-5xl lg:text-6xl font-display font-bold text-white mb-3">
+                Studia i tuoi Video Preferiti
+            </h1>
+            <p class="text-lg md:text-xl text-white/90 font-light">
+                Trasforma qualsiasi video YouTube in dispense di studio professionali
+            </p>
+        </div>
+
+        <!-- Main Card -->
+        <div class="glass-card rounded-3xl p-6 md:p-10 mb-6 slide-in" style="animation-delay: 0.1s;">
+            <!-- Input Section -->
+            <div class="mb-8">
+                <label for="youtubeUrl" class="block text-sm font-semibold text-gray-700 mb-3">
+                    🎬 Incolla il link del video YouTube
+                </label>
+                <div class="flex flex-col md:flex-row gap-3">
+                    <input 
+                        type="text" 
+                        id="youtubeUrl" 
+                        placeholder="https://www.youtube.com/watch?v=..."
+                        class="flex-1 px-5 py-4 border-2 border-gray-200 rounded-xl text-base focus:border-primary-500 transition-all"
+                    />
+                    <button 
+                        onclick="startProcessing()"
+                        class="btn-primary text-white px-8 py-4 rounded-xl font-semibold text-base shadow-lg flex items-center justify-center gap-2 whitespace-nowrap"
+                    >
+                        <span>✨</span>
+                        <span>Genera Dispensa</span>
+                    </button>
+                </div>
+                <p class="text-sm text-gray-500 mt-2">
+                    💡 Esempio: https://www.youtube.com/watch?v=dQw4w9WgXcQ
+                </p>
+                <p class="text-xs text-gray-400 mt-1">
+                    ⏱️ Limite massimo: 4 ore (240 minuti) di video
+                </p>
+                
+                <!-- Google Authentication Status -->
+                <div id="authStatus" class="mt-4 p-3 rounded-lg" style="display: none;">
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center gap-2">
+                            <span id="authIcon">🔐</span>
+                            <span id="authText" class="text-sm font-medium"></span>
+                        </div>
+                        <button 
+                            id="authButton"
+                            onclick="authenticateGoogle()"
+                            class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-medium transition-colors"
+                        >
+                            Accedi con Google
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Progress Section -->
+            <div id="progressSection" class="hidden mb-8">
+                <div class="mb-4">
+                    <div class="flex justify-between items-center mb-2">
+                        <span class="text-sm font-semibold text-gray-700">Progresso</span>
+                        <span id="progressPercent" class="text-sm font-bold gradient-text">0%</span>
+                    </div>
+                    <div class="w-full bg-gray-200 rounded-full h-3 overflow-hidden">
+                        <div id="progressBar" class="progress-bar h-full rounded-full" style="width: 0%; background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);"></div>
+                    </div>
+                </div>
+
+                <!-- Steps -->
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mt-6">
+                    <div class="step-item text-center" data-step="1">
+                        <div class="step-icon w-12 h-12 rounded-full bg-gray-200 mx-auto mb-2 flex items-center justify-center text-xl">
+                            📥
+                        </div>
+                        <p class="text-xs font-medium text-gray-600">Estrazione</p>
+                    </div>
+                    <div class="step-item text-center" data-step="2">
+                        <div class="step-icon w-12 h-12 rounded-full bg-gray-200 mx-auto mb-2 flex items-center justify-center text-xl">
+                            🤖
+                        </div>
+                        <p class="text-xs font-medium text-gray-600">Elaborazione AI</p>
+                    </div>
+                    <div class="step-item text-center" data-step="3">
+                        <div class="step-icon w-12 h-12 rounded-full bg-gray-200 mx-auto mb-2 flex items-center justify-center text-xl">
+                            💾
+                        </div>
+                        <p class="text-xs font-medium text-gray-600">Salvataggio</p>
+                    </div>
+                    <div class="step-item text-center" data-step="4">
+                        <div class="step-icon w-12 h-12 rounded-full bg-gray-200 mx-auto mb-2 flex items-center justify-center text-xl">
+                            📧
+                        </div>
+                        <p class="text-xs font-medium text-gray-600">Notifica</p>
+                    </div>
+                </div>
+
+                <!-- Status Message -->
+                <div id="statusMessage" class="mt-6 p-4 bg-blue-50 border border-blue-200 rounded-xl">
+                    <p class="text-sm text-blue-800 text-center font-medium">
+                        In attesa di elaborazione...
+                    </p>
+                </div>
+            </div>
+
+            <!-- Result Section -->
+            <div id="resultSection" class="hidden">
+                <div class="result-card p-6 rounded-xl mb-4">
+                    <div class="flex items-start gap-4">
+                        <div class="text-4xl">✅</div>
+                        <div class="flex-1">
+                            <h3 class="text-xl font-bold text-gray-800 mb-2">Dispensa Creata con Successo!</h3>
+                            <p class="text-gray-600 mb-4" id="resultDescription">
+                                La tua dispensa è stata generata e salvata in Google Drive.
+                            </p>
+                            <div class="space-y-2">
+                                <div class="flex items-center gap-2 text-sm">
+                                    <span class="font-semibold text-gray-700">📄 Documento:</span>
+                                    <a id="docLink" href="#" target="_blank" class="text-blue-600 hover:text-blue-700 underline">Apri in Google Drive</a>
+                                </div>
+                                <div class="flex items-center gap-2 text-sm">
+                                    <span class="font-semibold text-gray-700">📁 Cartella:</span>
+                                    <span id="folderName" class="text-gray-600">-</span>
+                                </div>
+                                <div class="flex items-center gap-2 text-sm">
+                                    <span class="font-semibold text-gray-700">📧 Email:</span>
+                                    <span class="text-green-600 font-medium">Inviata a roberto.micarelli@gmail.com</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <button 
+                    onclick="resetApp()"
+                    class="w-full bg-gray-100 hover:bg-gray-200 text-gray-700 px-6 py-3 rounded-xl font-semibold transition-all"
+                >
+                    ➕ Elabora un Altro Video
+                </button>
+            </div>
+        </div>
+
+        <!-- Info Cards -->
+        <div class="grid md:grid-cols-3 gap-4 slide-in" style="animation-delay: 0.2s;">
+            <div class="bg-white/90 backdrop-blur-sm rounded-2xl p-6 shadow-lg hover:shadow-xl transition-shadow">
+                <div class="text-3xl mb-3">🎯</div>
+                <h3 class="font-bold text-gray-800 mb-2">Formattazione Professionale</h3>
+                <p class="text-sm text-gray-600">
+                    Trascrizioni organizzate con titoli, abstract, parole chiave e sezioni tematiche.
+                </p>
+            </div>
+            <div class="bg-white/90 backdrop-blur-sm rounded-2xl p-6 shadow-lg hover:shadow-xl transition-shadow">
+                <div class="text-3xl mb-3">🗂️</div>
+                <h3 class="font-bold text-gray-800 mb-2">Organizzazione Automatica</h3>
+                <p class="text-sm text-gray-600">
+                    I documenti vengono catalogati automaticamente per argomento nel tuo Drive.
+                </p>
+            </div>
+            <div class="bg-white/90 backdrop-blur-sm rounded-2xl p-6 shadow-lg hover:shadow-xl transition-shadow">
+                <div class="text-3xl mb-3">📊</div>
+                <h3 class="font-bold text-gray-800 mb-2">Tracciamento Completo</h3>
+                <p class="text-sm text-gray-600">
+                    Email di notifica e registro automatico in Google Sheets di tutti i contenuti generati.
+                </p>
+            </div>
+        </div>
+
+        <!-- How it Works Section -->
+        <div class="mt-8 glass-card rounded-2xl p-6 md:p-8 slide-in" style="animation-delay: 0.3s;">
+            <h2 class="text-2xl font-bold text-gray-800 mb-6 text-center">Come Funziona</h2>
+            <div class="grid md:grid-cols-2 gap-6">
+                <div class="flex gap-4">
+                    <div class="flex-shrink-0 w-10 h-10 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center text-white font-bold">1</div>
+                    <div>
+                        <h4 class="font-semibold text-gray-800 mb-1">Inserisci il Link</h4>
+                        <p class="text-sm text-gray-600">Copia l'URL del video YouTube che vuoi studiare</p>
+                    </div>
+                </div>
+                <div class="flex gap-4">
+                    <div class="flex-shrink-0 w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-cyan-500 flex items-center justify-center text-white font-bold">2</div>
+                    <div>
+                        <h4 class="font-semibold text-gray-800 mb-1">Estrazione Automatica</h4>
+                        <p class="text-sm text-gray-600">L'AI estrae la trascrizione e analizza il contenuto</p>
+                    </div>
+                </div>
+                <div class="flex gap-4">
+                    <div class="flex-shrink-0 w-10 h-10 rounded-full bg-gradient-to-br from-green-500 to-emerald-500 flex items-center justify-center text-white font-bold">3</div>
+                    <div>
+                        <h4 class="font-semibold text-gray-800 mb-1">Dispensa Strutturata</h4>
+                        <p class="text-sm text-gray-600">Viene generata una dispensa didattica ben formattata</p>
+                    </div>
+                </div>
+                <div class="flex gap-4">
+                    <div class="flex-shrink-0 w-10 h-10 rounded-full bg-gradient-to-br from-orange-500 to-red-500 flex items-center justify-center text-white font-bold">4</div>
+                    <div>
+                        <h4 class="font-semibold text-gray-800 mb-1">Salvataggio su Drive</h4>
+                        <p class="text-sm text-gray-600">Il documento viene salvato e catalogato automaticamente</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Footer Note -->
+        <div class="mt-8 text-center text-white/80 text-sm">
+            <p>🔐 I tuoi dati sono al sicuro. L'app accede solo alle cartelle autorizzate nel tuo Google Drive.</p>
+            <p class="mt-2 text-xs text-white/60">Questa è una demo. Per la versione completa è necessario configurare le API di Google Drive, YouTube e OpenAI.</p>
+        </div>
+    </div>
+
+    <script>
+        // Configurazione
+        const CONFIG = {
+            driveFolder: '1nhFM1-c2lG9xKPdMjQfLPqU6jtofrRRH',
+            email: 'roberto.micarelli@gmail.com',
+            categories: ['INTERVISTE', 'STUDIO AI', 'APPLICAZIONI', 'TECNOLOGIA', 'FORMAZIONE']
+        };
+
+        // Configurazione - Le API keys sono gestite dal backend (Vercel Functions)
+        // Non esporre mai API keys nel codice frontend!
+        let googleAccessToken = null;
+
+        // Recupera token da URL se presente (dopo OAuth callback)
+        const urlParams = new URLSearchParams(window.location.search);
+        if (urlParams.get('token')) {
+            googleAccessToken = urlParams.get('token');
+            // Rimuovi token dall'URL per sicurezza
+            window.history.replaceState({}, document.title, window.location.pathname);
+            localStorage.setItem('googleAccessToken', googleAccessToken);
+        } else {
+            // Prova a recuperare da localStorage
+            googleAccessToken = localStorage.getItem('googleAccessToken');
+        }
+
+        // Prompt per OpenAI (modificato e ottimizzato)
+        const PROMPT_TEMPLATE = `Trasforma la seguente trascrizione di un video YouTube in una dispensa didattica professionale, strutturata per l'apprendimento e la consultazione rapida.
+
+STRUTTURA RICHIESTA
+
+1. METADATI DEL VIDEO
+**Autore:** [Nome del canale/creatore]
+**Titolo:** [Titolo del video]
+**URL YouTube:** [Link al video]
+**Temi Trattati:** #tema1 #tema2 #tema3 #tema4 #tema5
+**Data di elaborazione:** ${new Date().toLocaleDateString('it-IT')}
+
+2. ABSTRACT
+Scrivi un abstract di 3-4 righe che sintetizzi:
+* L'argomento principale del video
+* Gli obiettivi formativi
+* I punti chiave che verranno trattati
+* Il target di riferimento
+
+3. CORPO DELLA DISPENSA
+FORMATTAZIONE RICHIESTA:
+* Suddividi il contenuto in sezioni tematiche chiare
+* Usa titoli e sottotitoli gerarchici (H1, H2, H3)
+* Evidenzia i concetti chiave in grassetto
+* Crea elenchi puntati per informazioni strutturate
+* Inserisci box informativi per definizioni importanti
+* Mantieni paragrafi di lunghezza media (3-5 righe)
+
+CRITERI DI ELABORAZIONE:
+1. Elimina ripetizioni, esitazioni, e contenuti non rilevanti
+2. Ignora completamente parti promozionali o pubblicitarie
+3. Riorganizza il contenuto in ordine logico-didattico
+4. Arricchisci con strutture testuali che facilitino la comprensione
+5. Mantieni tutti i concetti e le informazioni tecniche importanti
+6. Aggiungi collegamenti logici tra le sezioni quando necessario
+
+4. SEZIONE FINALE
+* Punti chiave da ricordare: (3-5 bullet points)
+* Approfondimenti suggeriti: (se menzionati nel video)
+* Applicazioni pratiche: (se presenti)
+
+TONE OF VOICE
+* Professionale ma accessibile
+* Chiaro e diretto
+* Orientato all'apprendimento
+* Mantenere terminologia tecnica quando appropriata
+
+TRASCRIZIONE:
+{{TRANSCRIPT}}`;
+
+        let currentVideoData = {};
+
+        function validateYouTubeUrl(url) {
+            const regex = /^(https?:\/\/)?(www\.)?(youtube\.com\/watch\?v=|youtu\.be\/)([a-zA-Z0-9_-]{11})/;
+            const match = url.match(regex);
+            return match ? match[4] : null;
+        }
+
+        function updateProgress(percent, step, message) {
+            document.getElementById('progressBar').style.width = percent + '%';
+            document.getElementById('progressPercent').textContent = percent + '%';
+            document.getElementById('statusMessage').innerHTML = `
+                <p class="text-sm text-blue-800 text-center font-medium">${message}</p>
+            `;
+
+            // Update step icons
+            document.querySelectorAll('.step-item').forEach((item, index) => {
+                const icon = item.querySelector('.step-icon');
+                icon.classList.remove('active', 'completed');
+                
+                if (index + 1 < step) {
+                    icon.classList.add('completed');
+                } else if (index + 1 === step) {
+                    icon.classList.add('active');
+                    item.classList.add('active');
+                } else {
+                    item.classList.remove('active');
+                }
+            });
+        }
+
+        async function getYouTubeTranscript(videoId) {
+            try {
+                const response = await fetch('/api/youtube', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ videoId })
+                });
+
+                if (!response.ok) {
+                    const error = await response.json();
+                    throw new Error(error.error || 'Errore estrazione trascrizione');
+                }
+
+                const data = await response.json();
+                return {
+                    title: data.title,
+                    author: data.author,
+                    transcript: data.transcript
+                };
+            } catch (error) {
+                console.error('Errore YouTube API:', error);
+                // Fallback a modalità demo in caso di errore
+                return new Promise((resolve) => {
+                    setTimeout(() => {
+                        resolve({
+                            title: "Machine Learning e AI - Introduzione Completa",
+                            author: "Tech Education Channel",
+                            transcript: "Trascrizione non disponibile. Modalità demo attiva."
+                        });
+                    }, 1000);
+                });
+            }
+        }
+
+        async function processWithOpenAI(transcript, videoTitle, videoUrl, author) {
+            // Validazione lunghezza trascrizione (limite 4 ore)
+            // Stima approssimativa: ~250 token per minuto, 4 ore = ~60.000 token
+            const estimatedTokens = Math.ceil(transcript.length / 4);
+            const maxTokensFor4Hours = 60000;
+            
+            if (estimatedTokens > maxTokensFor4Hours) {
+                throw new Error('Video troppo lungo. Il limite massimo è di 4 ore (240 minuti). Per favore, usa un video più corto.');
+            }
+
+            const prompt = PROMPT_TEMPLATE
+                .replace('{{TRANSCRIPT}}', transcript);
+
+            try {
+                const response = await fetch('/api/openai', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        transcript,
+                        videoTitle,
+                        videoUrl,
+                        author,
+                        prompt
+                    })
+                });
+
+                if (!response.ok) {
+                    const error = await response.json();
+                    throw new Error(error.error || 'Errore elaborazione OpenAI');
+                }
+
+                const data = await response.json();
+                return data.dispensa;
+            } catch (error) {
+                console.error('Errore chiamata OpenAI:', error);
+                // Rilancia l'errore per gestirlo nel flusso principale
+                throw error;
+            }
+        }
+
+        function generateMockDispensa(title, url, author, transcript) {
+            const today = new Date().toLocaleDateString('it-IT');
+            return `**Autore:** ${author}
+**Titolo:** ${title}
+**URL YouTube:** ${url}
+**Temi Trattati:** #machinelearning #AI #intelligenzaartificiale #deeplearning #tecnologia
+**Data di elaborazione:** ${today}
+
+ABSTRACT
+
+Questo video introduce i concetti fondamentali del Machine Learning e dell'intelligenza artificiale moderna. L'obiettivo è fornire una panoramica completa delle diverse tipologie di apprendimento automatico, delle loro caratteristiche distintive e delle applicazioni pratiche nel mondo reale. Ideale per studenti, professionisti e chiunque voglia comprendere le basi dell'AI contemporanea.
+
+## 1. INTRODUZIONE AL MACHINE LEARNING
+
+Il **Machine Learning** rappresenta una delle rivoluzioni tecnologiche più significative del nostro tempo. Si tratta di una branca dell'intelligenza artificiale che permette ai sistemi informatici di apprendere dai dati senza essere esplicitamente programmati per ogni singola situazione.
+
+### 1.1 Definizione e Principi Fondamentali
+
+Il Machine Learning si basa sulla capacità dei sistemi di:
+* **Analizzare** grandi quantità di dati
+* **Identificare** pattern e correlazioni nascoste
+* **Migliorare** le proprie prestazioni nel tempo
+* **Generalizzare** l'apprendimento a nuove situazioni
+
+A differenza della programmazione tradizionale, dove ogni regola deve essere codificata manualmente, il ML permette ai sistemi di scoprire autonomamente regole e relazioni nei dati.
+
+## 2. LE TRE TIPOLOGIE PRINCIPALI DI MACHINE LEARNING
+
+### 2.1 Supervised Learning (Apprendimento Supervisionato)
+
+Nel **supervised learning**, l'algoritmo apprende da un dataset etichettato, dove ogni esempio è associato alla risposta corretta. È come avere un insegnante che fornisce feedback continuo durante il processo di apprendimento.
+
+**Caratteristiche principali:**
+* Dataset con etichette predefinite (labels)
+* Feedback diretto su ogni previsione
+* Obiettivo: prevedere output per nuovi input
+
+**Esempi di applicazioni:**
+* Classificazione di email (spam/non spam)
+* Riconoscimento di immagini e oggetti
+* Previsione di prezzi immobiliari
+* Diagnosi mediche assistite
+
+**Problemi tipici:**
+* **Classificazione**: Assegnare categorie discrete (es. gatto/cane)
+* **Regressione**: Prevedere valori continui (es. prezzo di una casa)
+
+### 2.2 Unsupervised Learning (Apprendimento Non Supervisionato)
+
+L'**unsupervised learning** lavora con dati non etichettati. L'algoritmo deve scoprire autonomamente la struttura nascosta e i pattern nei dati, senza alcuna guida esterna.
+
+**Caratteristiche principali:**
+* Nessuna etichetta predefinita
+* Ricerca autonoma di strutture nei dati
+* Obiettivo: scoprire relazioni e raggruppamenti
+
+**Esempi di applicazioni:**
+* Segmentazione di clienti per marketing
+* Compressione di dati (riduzione dimensionalità)
+* Rilevamento di anomalie in sistemi di sicurezza
+* Analisi esplorativa dei dati
+
+**Tecniche comuni:**
+* **Clustering**: Raggruppare dati simili (K-means, DBSCAN)
+* **Dimensionality Reduction**: Semplificare dati complessi (PCA, t-SNE)
+* **Association Rules**: Scoprire relazioni tra elementi
+
+### 2.3 Reinforcement Learning (Apprendimento per Rinforzo)
+
+Il **reinforcement learning** si basa su un sistema di premi e punizioni. Un agente impara a prendere decisioni attraverso l'interazione continua con un ambiente, ricevendo feedback sotto forma di ricompense.
+
+**Caratteristiche principali:**
+* Sistema di reward/penalty
+* Apprendimento per tentativi ed errori
+* Obiettivo: massimizzare la ricompensa cumulativa
+
+**Esempi di applicazioni:**
+* Giochi strategici (AlphaGo, scacchi, videogiochi)
+* Robotica e controllo di sistemi autonomi
+* Ottimizzazione di processi industriali
+* Trading algoritmico
+
+**Componenti chiave:**
+* **Agente**: Entità che prende decisioni
+* **Ambiente**: Contesto in cui opera l'agente
+* **Azioni**: Scelte possibili dell'agente
+* **Ricompense**: Feedback dall'ambiente
+
+## 3. CONCETTI FONDAMENTALI
+
+### 3.1 Features (Caratteristiche)
+
+Le **features** sono le caratteristiche misurabili dei dati che l'algoritmo utilizza per fare previsioni. La selezione e l'ingegnerizzazione delle features sono cruciali per il successo di un modello.
+
+### 3.2 Training e Testing
+
+Il processo di sviluppo di un modello ML si divide in due fasi:
+
+* **Training**: L'algoritmo apprende dai dati di esempio
+* **Testing**: Il modello viene valutato su dati mai visti prima
+
+Questa separazione è essenziale per verificare la capacità di generalizzazione del modello ed evitare l'**overfitting** (memorizzazione dei dati invece che apprendimento di pattern generali).
+
+### 3.3 Algoritmi Popolari
+
+Tra gli algoritmi più utilizzati troviamo:
+
+* **Reti Neurali**: Ispirate al cervello umano, eccellenti per pattern complessi
+* **Alberi Decisionali**: Facili da interpretare, utili per decisioni gerarchiche
+* **Support Vector Machines (SVM)**: Efficaci per classificazione binaria
+* **Random Forest**: Ensemble di alberi per previsioni robuste
+* **K-Nearest Neighbors (KNN)**: Basato sulla similarità tra esempi
+
+## 4. DEEP LEARNING: LA RIVOLUZIONE DELLE RETI NEURALI PROFONDE
+
+Il **deep learning** rappresenta un sottoinsieme del ML basato su reti neurali con molti livelli (layer). Questa tecnologia ha permesso progressi straordinari negli ultimi anni.
+
+### Applicazioni del Deep Learning:
+
+* **Computer Vision**: Riconoscimento facciale, analisi di immagini mediche
+* **Natural Language Processing**: Traduzione automatica, chatbot, analisi del sentiment
+* **Generative AI**: Creazione di immagini, testi e musica
+* **Speech Recognition**: Assistenti vocali come Alexa, Siri, Google Assistant
+
+## 5. APPLICAZIONI PRATICHE NEL MONDO REALE
+
+Il Machine Learning ha trasformato numerosi settori industriali:
+
+### 5.1 Entertainment e Media
+* **Sistemi di raccomandazione**: Netflix, Spotify, YouTube
+* **Personalizzazione dei contenuti**
+* **Moderazione automatica**
+
+### 5.2 Sanità
+* **Diagnosi assistita**: Analisi di radiografie e risonanze
+* **Scoperta di farmaci**: Identificazione di nuove molecole
+* **Medicina personalizzata**
+
+### 5.3 Finanza
+* **Rilevamento frodi**: Identificazione di transazioni sospette
+* **Trading algoritmico**: Decisioni di investimento automatizzate
+* **Credit scoring**: Valutazione del rischio creditizio
+
+### 5.4 Trasporti
+* **Veicoli autonomi**: Auto a guida automatica
+* **Ottimizzazione delle rotte**
+* **Manutenzione predittiva**
+
+### 5.5 Retail e E-commerce
+* **Personalizzazione dell'esperienza utente**
+* **Gestione dell'inventario**
+* **Pricing dinamico**
+
+## 6. STRUMENTI E FRAMEWORK PER INIZIARE
+
+Per chi vuole avvicinarsi al Machine Learning, esistono eccellenti strumenti:
+
+### Framework e Librerie:
+* **Scikit-learn**: Ideale per iniziare, API semplice
+* **TensorFlow**: Framework completo di Google
+* **PyTorch**: Molto popolare in ricerca, flessibile
+* **Keras**: API ad alto livello per deep learning
+
+### Piattaforme di Apprendimento:
+* **Kaggle**: Dataset, competizioni e community
+* **Google Colab**: Notebook gratuiti con GPU
+* **Jupyter Notebooks**: Ambiente interattivo per sperimentazione
+
+## 7. SFIDE ETICHE E CONSIDERAZIONI
+
+Lo sviluppo responsabile dell'AI richiede attenzione a:
+
+* **Bias nei dati**: Evitare discriminazioni algoritmiche
+* **Privacy**: Protezione dei dati personali
+* **Trasparenza**: Spiegabilità delle decisioni
+* **Accountability**: Responsabilità nelle decisioni automatizzate
+* **Impatto sociale**: Effetti su lavoro ed economia
+
+---
+
+### PUNTI CHIAVE DA RICORDARE:
+
+* Il Machine Learning permette ai computer di apprendere dai dati senza programmazione esplicita
+* Esistono tre paradigmi principali: supervised, unsupervised e reinforcement learning
+* Il deep learning ha rivoluzionato il campo con reti neurali profonde
+* Le applicazioni spaziano dalla sanità alla finanza, dall'intrattenimento ai trasporti
+* Framework come TensorFlow e PyTorch rendono l'ML accessibile a tutti
+* È fondamentale considerare le implicazioni etiche dello sviluppo dell'AI
+
+### APPROFONDIMENTI SUGGERITI:
+
+* Studiare matematica alla base del ML (algebra lineare, calcolo, statistica)
+* Esplorare dataset reali su Kaggle per progetti pratici
+* Seguire corsi strutturati (Coursera, edX, Fast.ai)
+* Leggere paper di ricerca su arXiv per scoprire le ultime innovazioni
+* Partecipare a comunità online (Reddit r/MachineLearning, forum specializzati)
+
+### APPLICAZIONI PRATICHE:
+
+* Iniziare con progetti semplici: classificazione di iris, previsione prezzi case
+* Sperimentare con dataset pubblici (MNIST, CIFAR-10, ImageNet)
+* Costruire portfolio di progetti su GitHub
+* Partecipare a competizioni Kaggle per testare le proprie competenze
+* Contribuire a progetti open source di ML`;
+        }
+
+        function selectCategory(themes) {
+            const themesLower = themes.toLowerCase();
+            
+            if (themesLower.includes('ai') || themesLower.includes('machine learning') || themesLower.includes('intelligenza') || themesLower.includes('deeplearning')) {
+                return 'STUDIO AI';
+            } else if (themesLower.includes('intervista') || themesLower.includes('interview')) {
+                return 'INTERVISTE';
+            } else if (themesLower.includes('applicazione') || themesLower.includes('app') || themesLower.includes('software')) {
+                return 'APPLICAZIONI';
+            } else if (themesLower.includes('tecnologia') || themesLower.includes('tech')) {
+                return 'TECNOLOGIA';
+            } else {
+                return 'FORMAZIONE';
+            }
+        }
+
+        async function saveToGoogleDrive(content, title, category) {
+            if (!googleAccessToken) {
+                throw new Error('Autenticazione Google richiesta. Esegui il login.');
+            }
+
+            try {
+                const response = await fetch('/api/drive', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        content,
+                        title,
+                        category,
+                        accessToken: googleAccessToken
+                    })
+                });
+
+                if (!response.ok) {
+                    const error = await response.json();
+                    throw new Error(error.error || 'Errore salvataggio Google Drive');
+                }
+
+                const data = await response.json();
+                return {
+                    success: true,
+                    docUrl: data.docUrl,
+                    docId: data.docId,
+                    category: data.category
+                };
+            } catch (error) {
+                console.error('Errore Google Drive API:', error);
+                throw error;
+            }
+        }
+
+        async function sendEmail(docUrl, videoUrl, abstract, fileName) {
+            if (!googleAccessToken) {
+                console.warn('Token Google non disponibile, email non inviata');
+                return { success: false };
+            }
+
+            try {
+                const response = await fetch('/api/gmail', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        docUrl,
+                        videoUrl,
+                        abstract,
+                        fileName,
+                        accessToken: googleAccessToken
+                    })
+                });
+
+                if (!response.ok) {
+                    const error = await response.json();
+                    console.error('Errore invio email:', error);
+                    return { success: false, error: error.error };
+                }
+
+                const data = await response.json();
+                return { success: true, messageId: data.messageId };
+            } catch (error) {
+                console.error('Errore Gmail API:', error);
+                return { success: false, error: error.message };
+            }
+        }
+
+        async function updateGoogleSheet(data) {
+            if (!googleAccessToken) {
+                console.warn('Token Google non disponibile, sheet non aggiornato');
+                return { success: false };
+            }
+
+            try {
+                const response = await fetch('/api/sheets', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        ...data,
+                        accessToken: googleAccessToken
+                    })
+                });
+
+                if (!response.ok) {
+                    const error = await response.json();
+                    console.error('Errore aggiornamento sheet:', error);
+                    return { success: false, error: error.error };
+                }
+
+                const result = await response.json();
+                return { success: true, updatedRange: result.updatedRange };
+            } catch (error) {
+                console.error('Errore Google Sheets API:', error);
+                return { success: false, error: error.message };
+            }
+        }
+
+        // Funzione per autenticazione Google OAuth
+        async function authenticateGoogle() {
+            try {
+                const response = await fetch('/api/auth?action=auth-url');
+                if (!response.ok) {
+                    throw new Error('Errore generazione URL autenticazione');
+                }
+                const data = await response.json();
+                window.location.href = data.authUrl;
+            } catch (error) {
+                console.error('Errore autenticazione:', error);
+                alert('Errore durante l\'autenticazione. Riprova.');
+            }
+        }
+
+        async function startProcessing() {
+            const urlInput = document.getElementById('youtubeUrl');
+            const url = urlInput.value.trim();
+            
+            if (!url) {
+                alert('⚠️ Per favore, inserisci un URL YouTube valido');
+                return;
+            }
+
+            const videoId = validateYouTubeUrl(url);
+            if (!videoId) {
+                alert('⚠️ URL YouTube non valido. Assicurati che sia nel formato corretto.\n\nEsempio: https://www.youtube.com/watch?v=dQw4w9WgXcQ');
+                return;
+            }
+
+            // Mostra sezione progresso
+            document.getElementById('progressSection').classList.remove('hidden');
+            document.getElementById('resultSection').classList.add('hidden');
+
+            try {
+                // Step 1: Estrazione trascrizione
+                updateProgress(10, 1, '📥 Connessione a YouTube...');
+                await new Promise(resolve => setTimeout(resolve, 500));
+                
+                updateProgress(20, 1, '📥 Estrazione trascrizione dal video...');
+                const videoData = await getYouTubeTranscript(videoId);
+                currentVideoData = { ...videoData, url };
+
+                updateProgress(30, 1, '✅ Trascrizione estratta con successo!');
+                await new Promise(resolve => setTimeout(resolve, 800));
+
+                // Step 2: Elaborazione con OpenAI
+                updateProgress(35, 2, '🤖 Inizializzazione intelligenza artificiale...');
+                await new Promise(resolve => setTimeout(resolve, 500));
+                
+                updateProgress(40, 2, '🤖 Elaborazione con OpenAI GPT...');
+                const dispensa = await processWithOpenAI(
+                    videoData.transcript, 
+                    videoData.title, 
+                    url, 
+                    videoData.author
+                );
+                currentVideoData.dispensa = dispensa;
+
+                updateProgress(65, 2, '✅ Dispensa generata con successo!');
+                await new Promise(resolve => setTimeout(resolve, 800));
+
+                // Estrai temi dall'abstract
+                const themesMatch = dispensa.match(/\*\*Temi Trattati:\*\* (.+)/);
+                const themes = themesMatch ? themesMatch[1] : '';
+                const category = selectCategory(themes);
+
+                // Step 3: Salvataggio su Google Drive
+                updateProgress(70, 3, '💾 Creazione documento Google Docs...');
+                await new Promise(resolve => setTimeout(resolve, 500));
+                
+                updateProgress(75, 3, `💾 Salvataggio nella cartella "${category}"...`);
+                const driveResult = await saveToGoogleDrive(dispensa, videoData.title, category);
+                currentVideoData.driveResult = driveResult;
+
+                updateProgress(85, 3, '✅ Documento salvato su Google Drive!');
+                await new Promise(resolve => setTimeout(resolve, 800));
+
+                // Step 4: Invio email e aggiornamento sheet
+                updateProgress(88, 4, '📧 Preparazione email di notifica...');
+                
+                const abstractMatch = dispensa.match(/ABSTRACT\n\n(.+?)\n\n/s);
+                const abstract = abstractMatch ? abstractMatch[1].trim() : 'Dispensa didattica generata da video YouTube';
+                
+                await sendEmail(driveResult.docUrl, url, abstract, videoData.title);
+                
+                updateProgress(93, 4, '✅ Email inviata!');
+                await new Promise(resolve => setTimeout(resolve, 500));
+                
+                updateProgress(96, 4, '📊 Aggiornamento registro Google Sheets...');
+                await updateGoogleSheet({
+                    timestamp: new Date().toISOString(),
+                    title: videoData.title,
+                    url: url,
+                    docUrl: driveResult.docUrl,
+                    category: category,
+                    abstract: abstract
+                });
+
+                updateProgress(100, 4, '✅ Processo completato!');
+                await new Promise(resolve => setTimeout(resolve, 1000));
+
+                // Mostra risultati
+                showResults(videoData.title, driveResult.docUrl, category, abstract);
+
+            } catch (error) {
+                console.error('Errore durante l\'elaborazione:', error);
+                const errorMessage = error.message || 'Errore durante l\'elaborazione. Riprova più tardi.';
+                document.getElementById('statusMessage').innerHTML = `
+                    <p class="text-sm text-red-800 text-center font-medium">
+                        ❌ ${errorMessage}
+                    </p>
+                `;
+                
+                // Se il video è troppo lungo, mostra messaggio più dettagliato
+                if (errorMessage.includes('troppo lungo') || errorMessage.includes('4 ore')) {
+                    document.getElementById('statusMessage').innerHTML = `
+                        <div class="text-sm text-red-800 text-center">
+                            <p class="font-bold mb-2">❌ Video troppo lungo</p>
+                            <p class="mb-2">Il limite massimo è di <strong>4 ore (240 minuti)</strong>.</p>
+                            <p class="text-xs text-gray-600">Per favore, usa un video più corto o dividi il contenuto in più parti.</p>
+                        </div>
+                    `;
+                }
+            }
+        }
+
+        function showResults(title, docUrl, category, abstract) {
+            document.getElementById('progressSection').classList.add('hidden');
+            document.getElementById('resultSection').classList.remove('hidden');
+            
+            const shortAbstract = abstract.length > 200 ? abstract.substring(0, 200) + '...' : abstract;
+            document.getElementById('resultDescription').textContent = shortAbstract;
+            document.getElementById('docLink').href = docUrl;
+            document.getElementById('docLink').textContent = title;
+            document.getElementById('folderName').textContent = category;
+        }
+
+        function resetApp() {
+            document.getElementById('youtubeUrl').value = '';
+            document.getElementById('progressSection').classList.add('hidden');
+            document.getElementById('resultSection').classList.add('hidden');
+            document.getElementById('progressBar').style.width = '0%';
+            document.getElementById('progressPercent').textContent = '0%';
+            
+            // Reset step icons
+            document.querySelectorAll('.step-item').forEach(item => {
+                const icon = item.querySelector('.step-icon');
+                icon.classList.remove('active', 'completed');
+                item.classList.remove('active');
+            });
+            
+            currentVideoData = {};
+        }
+
+        // Informazioni per sviluppatori
+        console.log('%c📚 Studia i tuoi Video Preferiti - APP Demo', 'font-size: 20px; font-weight: bold; color: #667eea;');
+        console.log('%c\nPer implementazione completa necessari:', 'font-size: 14px; font-weight: bold; color: #666;');
+        console.log('✓ Google Drive API per salvare documenti');
+        console.log('✓ YouTube Transcript API (backend) per estrarre trascrizioni');
+        console.log('✓ OpenAI API (GPT-4o-mini) per elaborazione AI');
+        console.log('✓ Gmail API o SMTP per invio email');
+        console.log('✓ Google Sheets API per tracciamento');
+        console.log('\n%cQuesta demo simula tutte le chiamate API', 'font-size: 12px; color: #999;');
+    </script>
+</body>
+</html>

@@ -1,0 +1,23 @@
+{
+  "name": "studia-video-youtube",
+  "version": "1.0.0",
+  "description": "App per trasformare video YouTube in dispense didattiche",
+  "main": "studia-video-youtube.html",
+  "scripts": {
+    "dev": "vercel dev",
+    "build": "echo 'No build step required'",
+    "start": "vercel dev"
+  },
+  "keywords": [
+    "youtube",
+    "transcription",
+    "openai",
+    "education"
+  ],
+  "author": "",
+  "license": "MIT",
+  "engines": {
+    "node": ">=18.x"
+  }
+}
+
