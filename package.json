@@ -8,6 +8,18 @@
     "build": "echo 'No build step required'",
     "start": "vercel dev"
   },
+  "vercel": {
+    "rewrites": [
+      {
+        "source": "/api/(.*)",
+        "destination": "/api/$1"
+      },
+      {
+        "source": "/",
+        "destination": "/studia-video-youtube.html"
+      }
+    ]
+  },
   "keywords": [
     "youtube",
     "transcription",
