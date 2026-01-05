@@ -867,8 +867,25 @@ Lo sviluppo responsabile dell'AI richiede attenzione a:
 
                 if (!response.ok) {
                     const error = await response.json();
+                    const errorMessage = error.error || 'Errore invio email';
+                    
+                    // Rileva se il token è scaduto o non valido
+                    if (response.status === 401 || 
+                        errorMessage.includes('invalid authentication credentials') ||
+                        errorMessage.includes('Invalid Credentials') ||
+                        errorMessage.includes('unauthorized')) {
+                        // Token scaduto o non valido
+                        console.warn('Token Google scaduto durante invio email');
+                        googleAccessToken = null;
+                        localStorage.removeItem('googleAccessToken');
+                        localStorage.removeItem('googleTokenExpiresAt');
+                        localStorage.removeItem('googleRefreshToken');
+                        updateAuthStatus();
+                        return { success: false, error: 'La sessione Google è scaduta. Per favore, esegui nuovamente il login.' };
+                    }
+                    
                     console.error('Errore invio email:', error);
-                    return { success: false, error: error.error };
+                    return { success: false, error: errorMessage };
                 }
 
                 const data = await response.json();
