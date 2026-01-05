@@ -417,11 +417,14 @@ STRUTTURA RICHIESTA
 **Data di elaborazione:** ${new Date().toLocaleDateString('it-IT')}
 
 2. ABSTRACT
-Scrivi un abstract di 3-4 righe che sintetizzi:
-* L'argomento principale del video
-* Gli obiettivi formativi
-* I punti chiave che verranno trattati
-* Il target di riferimento
+Scrivi un abstract dettagliato e professionale (4-6 righe) che sintetizzi in modo completo:
+* L'argomento principale del video e il contesto in cui si inserisce
+* Gli obiettivi formativi e l'approccio metodologico utilizzato
+* I punti chiave e i concetti fondamentali che verranno trattati
+* Il target di riferimento (professionisti, studenti, formatori, manager, ecc.)
+* L'importanza e la rilevanza del contenuto per il pubblico
+
+L'abstract deve essere scritto in un unico paragrafo fluido e coerente, senza elenchi puntati o formattazione markdown. Deve essere informativo e completo, permettendo al lettore di comprendere immediatamente il valore e il contenuto del video.
 
 3. CORPO DELLA DISPENSA
 FORMATTAZIONE RICHIESTA:
@@ -1067,47 +1070,96 @@ Lo sviluppo responsabile dell'AI richiede attenzione a:
                 // Step 4: Invio email e aggiornamento sheet
                 updateProgress(88, 4, '📧 Preparazione email di notifica...');
                 
-                // Estrai abstract con regex più robusta
+                // Estrai abstract con regex più robusta e flessibile
                 let abstract = 'Dispensa didattica generata da video YouTube';
                 
-                // Prova diversi pattern per trovare l'abstract (dopo "2. ABSTRACT" o "## 2. ABSTRACT")
+                console.log('=== DEBUG ESTRAZIONE ABSTRACT ===');
+                console.log('Lunghezza dispensa:', dispensa.length);
+                console.log('Preview dispensa (primi 1000 caratteri):', dispensa.substring(0, 1000));
+                
+                // Prova diversi pattern per trovare l'abstract
+                // Pattern più flessibili che gestiscono vari formati
                 const patterns = [
-                    // Pattern principale: ## 2. ABSTRACT seguito da testo fino alla prossima sezione
-                    /##\s*2\.\s*ABSTRACT\s*\n\n(.+?)(?=\n\n##\s*3\.|$)/s,
-                    /2\.\s*ABSTRACT\s*\n\n(.+?)(?=\n\n##\s*3\.|$)/s,
-                    /##\s*ABSTRACT\s*\n\n(.+?)(?=\n\n##\s*3\.|$)/s,
-                    /ABSTRACT\s*\n\n(.+?)(?=\n\n##\s*3\.|$)/s,
-                    // Pattern alternativi
-                    /##\s*2\.\s*ABSTRACT\s*\n\n(.+?)(?=\n\n##|\n\n###|$)/s,
-                    /2\.\s*ABSTRACT\s*\n\n(.+?)(?=\n\n##|\n\n###|$)/s
+                    // Pattern principale: ## 2. ABSTRACT seguito da testo (gestisce anche senza ##)
+                    /(?:##\s*)?2\.\s*ABSTRACT\s*\n\n(.+?)(?=\n\n(?:##\s*)?3\.|$)/is,
+                    // Pattern senza numerazione
+                    /(?:##\s*)?ABSTRACT\s*\n\n(.+?)(?=\n\n(?:##\s*)?3\.|$)/is,
+                    // Pattern con solo "ABSTRACT" come titolo
+                    /^ABSTRACT\s*\n\n(.+?)(?=\n\n(?:##\s*)?3\.|$)/ims,
+                    // Pattern che cerca qualsiasi sezione "ABSTRACT" seguita da testo
+                    /ABSTRACT[:\s]*\n\n(.+?)(?=\n\n(?:##\s*)?(?:3\.|CORPO|METADATI)|$)/is,
+                    // Pattern più generico: cerca testo dopo "ABSTRACT" fino alla prossima sezione principale
+                    /(?:##\s*)?2\.\s*ABSTRACT\s*\n+([^\n#]+(?:\n+[^\n#]+)*?)(?=\n+##|$)/is
                 ];
                 
-                for (const pattern of patterns) {
+                for (let i = 0; i < patterns.length; i++) {
+                    const pattern = patterns[i];
                     const match = dispensa.match(pattern);
+                    
                     if (match && match[1]) {
-                        abstract = match[1]
+                        let extractedAbstract = match[1]
                             .trim()
                             .replace(/\*\*/g, '') // Rimuovi **
-                            .replace(/\*/g, '') // Rimuovi *
+                            .replace(/\*/g, '') // Rimuovi * (ma non quelli in elenchi)
                             .replace(/#/g, '') // Rimuovi #
+                            .replace(/^\s*[-*•]\s+/gm, '') // Rimuovi elenchi puntati all'inizio riga
                             .replace(/\n+/g, ' ') // Sostituisci newline con spazio
                             .replace(/\s+/g, ' ') // Normalizza spazi multipli
                             .trim();
                         
-                        // Verifica che non sia vuoto o troppo corto
-                        if (abstract.length > 20) {
-                            abstract = abstract.substring(0, 1000); // Limita a 1000 caratteri
-                            console.log('Abstract estratto con successo:', abstract.substring(0, 100) + '...');
+                        console.log(`Pattern ${i + 1} trovato! Lunghezza abstract estratto:`, extractedAbstract.length);
+                        console.log('Abstract estratto (primi 200 caratteri):', extractedAbstract.substring(0, 200));
+                        
+                        // Verifica che non sia vuoto o troppo corto (almeno 50 caratteri per essere valido)
+                        if (extractedAbstract.length > 50) {
+                            abstract = extractedAbstract.substring(0, 1000); // Limita a 1000 caratteri
+                            console.log('✅ Abstract estratto con successo!');
+                            console.log('Abstract completo:', abstract);
                             break;
+                        } else {
+                            console.warn(`Pattern ${i + 1} trovato ma abstract troppo corto (${extractedAbstract.length} caratteri)`);
+                        }
+                    } else {
+                        console.log(`Pattern ${i + 1} non ha trovato match`);
+                    }
+                }
+                
+                // Se non trovato, prova a cercare qualsiasi testo tra "ABSTRACT" e "3." o "CORPO"
+                if (abstract === 'Dispensa didattica generata da video YouTube' || abstract.length < 50) {
+                    console.warn('⚠️ Abstract non trovato con i pattern standard, provo ricerca alternativa...');
+                    
+                    // Cerca la posizione di "ABSTRACT" e "3." o "CORPO"
+                    const abstractIndex = dispensa.search(/(?:##\s*)?2\.\s*ABSTRACT|ABSTRACT/i);
+                    const nextSectionIndex = dispensa.search(/(?:##\s*)?3\.|##\s*CORPO/i);
+                    
+                    if (abstractIndex !== -1 && nextSectionIndex !== -1 && nextSectionIndex > abstractIndex) {
+                        let alternativeAbstract = dispensa.substring(abstractIndex, nextSectionIndex)
+                            .replace(/(?:##\s*)?2\.\s*ABSTRACT|ABSTRACT/gi, '')
+                            .trim()
+                            .replace(/\*\*/g, '')
+                            .replace(/\*/g, '')
+                            .replace(/#/g, '')
+                            .replace(/^\s*[-*•]\s+/gm, '')
+                            .replace(/\n+/g, ' ')
+                            .replace(/\s+/g, ' ')
+                            .trim();
+                        
+                        if (alternativeAbstract.length > 50) {
+                            abstract = alternativeAbstract.substring(0, 1000);
+                            console.log('✅ Abstract estratto con metodo alternativo!');
+                            console.log('Abstract:', abstract);
                         }
                     }
                 }
                 
-                // Se non trovato, usa fallback
-                if (abstract === 'Dispensa didattica generata da video YouTube' || abstract.length < 20) {
-                    console.warn('Abstract non trovato nella dispensa, uso fallback');
-                    console.log('Dispensa preview:', dispensa.substring(0, 500));
+                // Se ancora non trovato, usa fallback
+                if (abstract === 'Dispensa didattica generata da video YouTube' || abstract.length < 50) {
+                    console.error('❌ Abstract non trovato nella dispensa, uso fallback');
+                    console.log('Dispensa completa (primi 2000 caratteri):', dispensa.substring(0, 2000));
+                } else {
+                    console.log('✅ Abstract finale da salvare:', abstract);
                 }
+                console.log('=== FINE DEBUG ESTRAZIONE ABSTRACT ===');
                 
                 await sendEmail(driveResult.docUrl, url, abstract, videoData.title);
                 
@@ -1117,7 +1169,16 @@ Lo sviluppo responsabile dell'AI richiede attenzione a:
                 updateProgress(96, 4, '📊 Aggiornamento registro Google Sheets...');
                 
                 // Debug: verifica che l'abstract sia stato estratto
-                console.log('Abstract estratto:', abstract.substring(0, 100) + '...');
+                console.log('=== PREPARAZIONE DATI PER GOOGLE SHEETS ===');
+                console.log('Abstract da salvare (lunghezza:', abstract.length, 'caratteri):');
+                console.log(abstract);
+                console.log('Abstract preview (primi 200 caratteri):', abstract.substring(0, 200));
+                
+                // Verifica che l'abstract non sia il fallback
+                if (abstract === 'Dispensa didattica generata da video YouTube' || abstract.length < 50) {
+                    console.error('⚠️ ATTENZIONE: Abstract non valido, verrà usato il fallback!');
+                    console.error('Abstract attuale:', abstract);
+                }
                 
                 await updateGoogleSheet({
                     timestamp: new Date().toISOString(),
@@ -1125,8 +1186,10 @@ Lo sviluppo responsabile dell'AI richiede attenzione a:
                     url: url,
                     docUrl: driveResult.docUrl,
                     category: category,
-                    abstract: abstract
+                    abstract: abstract // Assicurati che questo sia passato correttamente
                 });
+                
+                console.log('✅ Dati inviati a Google Sheets');
 
                 updateProgress(100, 4, '✅ Processo completato!');
                 await new Promise(resolve => setTimeout(resolve, 1000));
