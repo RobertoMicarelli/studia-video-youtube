@@ -69,8 +69,17 @@ export default async function handler(req, res) {
 
       if (!tokenResponse.ok) {
         const errorData = await tokenResponse.json().catch(() => ({}));
+        console.error('OAuth Token Error:', {
+          status: tokenResponse.status,
+          statusText: tokenResponse.statusText,
+          error: errorData,
+          redirectUri: redirectUri,
+          hasClientId: !!clientId,
+          hasClientSecret: !!clientSecret
+        });
         return res.status(tokenResponse.status).json({ 
-          error: `Errore autenticazione: ${errorData.error || tokenResponse.statusText}` 
+          error: `Errore autenticazione: ${errorData.error || tokenResponse.statusText}`,
+          details: errorData.error_description || 'Verifica che GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET e GOOGLE_REDIRECT_URI siano configurati correttamente in Vercel'
         });
       }
 
