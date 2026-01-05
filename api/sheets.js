@@ -20,6 +20,17 @@ export default async function handler(req, res) {
       return res.status(500).json({ error: 'Google Sheets ID non configurato' });
     }
 
+    // Prepara l'abstract (assicurati che non sia vuoto)
+    const abstractText = abstract && abstract.trim() ? abstract.trim() : 'Dispensa didattica generata da video YouTube';
+    
+    console.log('Google Sheets - Dati da inserire:', {
+      timestamp,
+      title: title.substring(0, 50),
+      category,
+      abstractLength: abstractText.length,
+      abstractPreview: abstractText.substring(0, 100)
+    });
+
     // Aggiungi riga al foglio
     const response = await fetch(
       `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}/values/A1:append?valueInputOption=RAW`,
@@ -36,7 +47,7 @@ export default async function handler(req, res) {
             url,
             docUrl,
             category || 'FORMAZIONE',
-            abstract || ''
+            abstractText
           ]]
         })
       }
