@@ -60,7 +60,6 @@ export default async function handler(req, res) {
         const folderData = await createFolderResponse.json();
         categoryFolderId = folderData.id;
       } else {
-        // Se fallisce la creazione, usa la cartella principale
         console.warn('Errore creazione cartella categoria, uso cartella principale');
         categoryFolderId = driveFolderId;
       }
@@ -90,11 +89,11 @@ export default async function handler(req, res) {
     const file = await createResponse.json();
     const fileId = file.id;
 
-    // Prepara il contenuto: rimuovi markdown e crea testo pulito
+    // Prepara il contenuto: converti markdown in testo formattato
+    // Rimuovi markdown inline ma mantieni la struttura
     let textContent = content
-      .replace(/\*\*(.+?)\*\*/g, '$1') // Rimuovi **
-      .replace(/\*(.+?)\*/g, '$1') // Rimuovi *
-      .replace(/^#+\s*/gm, '') // Rimuovi # dai titoli
+      .replace(/\*\*(.+?)\*\*/g, '$1') // Rimuovi ** (grassetto)
+      .replace(/\*(.+?)\*/g, '$1') // Rimuovi * (corsivo)
       .trim();
 
     // Inserisci il testo nel documento usando Google Docs API
@@ -121,8 +120,92 @@ export default async function handler(req, res) {
 
     if (!insertResponse.ok) {
       const errorData = await insertResponse.json().catch(() => ({}));
-      console.warn('Errore inserimento testo, documento creato ma vuoto:', errorData);
-      // Il documento è stato creato, anche se il contenuto non è stato inserito
+      console.warn('Errore inserimento testo:', errorData);
+      // Il documento è stato creato, anche se il contenuto potrebbe non essere stato inserito
+    } else {
+      // Dopo l'inserimento, applica formattazione ai titoli
+      // Leggi il documento per ottenere la struttura
+      const docResponse = await fetch(
+        `https://docs.googleapis.com/v1/documents/${fileId}`,
+        {
+          headers: {
+            'Authorization': `Bearer ${accessToken}`
+          }
+        }
+      );
+
+      if (docResponse.ok) {
+        const doc = await docResponse.json();
+        const requests = [];
+        const content = doc.body?.content || [];
+        
+        // Cerca pattern di titoli nel testo e applica formattazione
+        const lines = textContent.split('\n');
+        let currentIndex = 1;
+        
+        lines.forEach((line) => {
+          const trimmed = line.trim();
+          if (!trimmed) {
+            currentIndex += line.length + 1;
+            return;
+          }
+
+          // Titoli principali (##)
+          if (trimmed.match(/^1\. METADATI|^2\. ABSTRACT|^3\. CORPO|^4\. SEZIONE/)) {
+            requests.push({
+              updateParagraphStyle: {
+                range: {
+                  startIndex: currentIndex,
+                  endIndex: currentIndex + line.length
+                },
+                paragraphStyle: {
+                  namedStyleType: 'HEADING_1'
+                },
+                fields: 'namedStyleType'
+              }
+            });
+          }
+          // Sottotitoli (###)
+          else if (trimmed.match(/^###|^##/)) {
+            requests.push({
+              updateParagraphStyle: {
+                range: {
+                  startIndex: currentIndex,
+                  endIndex: currentIndex + line.length
+                },
+                paragraphStyle: {
+                  namedStyleType: 'HEADING_2'
+                },
+                fields: 'namedStyleType'
+              }
+            });
+          }
+
+          currentIndex += line.length + 1;
+        });
+
+        // Applica formattazione in batch (max 50 richieste per volta)
+        if (requests.length > 0) {
+          for (let i = 0; i < requests.length; i += 50) {
+            const batch = requests.slice(i, i + 50);
+            const formatResponse = await fetch(
+              `https://docs.googleapis.com/v1/documents/${fileId}:batchUpdate`,
+              {
+                method: 'POST',
+                headers: {
+                  'Authorization': `Bearer ${accessToken}`,
+                  'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ requests: batch })
+              }
+            );
+            
+            if (!formatResponse.ok) {
+              console.warn('Errore applicazione formattazione batch:', await formatResponse.json().catch(() => ({})));
+            }
+          }
+        }
+      }
     }
 
     const docUrl = `https://docs.google.com/document/d/${fileId}/edit`;
