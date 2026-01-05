@@ -983,16 +983,34 @@ Lo sviluppo responsabile dell'AI richiede attenzione a:
                 
                 // Estrai abstract con regex più robusta
                 let abstract = 'Dispensa didattica generata da video YouTube';
-                const abstractMatch1 = dispensa.match(/## 2\. ABSTRACT\s*\n\n(.+?)(?=\n\n##|\n\n###|$)/s);
-                const abstractMatch2 = dispensa.match(/ABSTRACT\s*\n\n(.+?)(?=\n\n##|\n\n###|$)/s);
-                const abstractMatch3 = dispensa.match(/\*\*ABSTRACT\*\*\s*\n\n(.+?)(?=\n\n##|\n\n###|$)/s);
                 
-                if (abstractMatch1) {
-                    abstract = abstractMatch1[1].trim().replace(/\*\*/g, '').replace(/\n/g, ' ').substring(0, 500);
-                } else if (abstractMatch2) {
-                    abstract = abstractMatch2[1].trim().replace(/\*\*/g, '').replace(/\n/g, ' ').substring(0, 500);
-                } else if (abstractMatch3) {
-                    abstract = abstractMatch3[1].trim().replace(/\*\*/g, '').replace(/\n/g, ' ').substring(0, 500);
+                // Prova diversi pattern per trovare l'abstract
+                const patterns = [
+                    /##\s*2\.\s*ABSTRACT\s*\n\n(.+?)(?=\n\n##|\n\n###|$)/s,
+                    /##\s*ABSTRACT\s*\n\n(.+?)(?=\n\n##|\n\n###|$)/s,
+                    /ABSTRACT\s*\n\n(.+?)(?=\n\n##|\n\n###|$)/s,
+                    /\*\*ABSTRACT\*\*\s*\n\n(.+?)(?=\n\n##|\n\n###|$)/s,
+                    /2\.\s*ABSTRACT\s*\n\n(.+?)(?=\n\n##|\n\n###|$)/s
+                ];
+                
+                for (const pattern of patterns) {
+                    const match = dispensa.match(pattern);
+                    if (match && match[1]) {
+                        abstract = match[1]
+                            .trim()
+                            .replace(/\*\*/g, '') // Rimuovi **
+                            .replace(/\*/g, '') // Rimuovi *
+                            .replace(/#/g, '') // Rimuovi #
+                            .replace(/\n+/g, ' ') // Sostituisci newline con spazio
+                            .replace(/\s+/g, ' ') // Normalizza spazi multipli
+                            .substring(0, 1000); // Limita a 1000 caratteri
+                        break;
+                    }
+                }
+                
+                // Se non trovato, usa fallback
+                if (abstract === 'Dispensa didattica generata da video YouTube') {
+                    console.warn('Abstract non trovato nella dispensa, uso fallback');
                 }
                 
                 await sendEmail(driveResult.docUrl, url, abstract, videoData.title);

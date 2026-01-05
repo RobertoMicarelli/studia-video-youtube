@@ -90,10 +90,12 @@ export default async function handler(req, res) {
     const fileId = file.id;
 
     // Prepara il contenuto: converti markdown in testo formattato
-    // Rimuovi markdown inline ma mantieni la struttura
+    // Rimuovi tutti i simboli markdown
     let textContent = content
+      .replace(/^#+\s+/gm, '') // Rimuovi # ## ### #### all'inizio delle righe
       .replace(/\*\*(.+?)\*\*/g, '$1') // Rimuovi ** (grassetto)
       .replace(/\*(.+?)\*/g, '$1') // Rimuovi * (corsivo)
+      .replace(/\[([^\]]+)\]\([^\)]+\)/g, '$1') // Rimuovi link markdown [testo](url) -> testo
       .trim();
 
     // Inserisci il testo nel documento usando Google Docs API
