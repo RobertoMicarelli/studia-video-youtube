@@ -160,21 +160,12 @@
                 <label for="youtubeUrl" class="block text-sm font-semibold text-gray-700 mb-3">
                     🎬 Incolla il link del video YouTube
                 </label>
-                <div class="flex flex-col md:flex-row gap-3">
-                    <input 
-                        type="text" 
-                        id="youtubeUrl" 
-                        placeholder="https://www.youtube.com/watch?v=..."
-                        class="flex-1 px-5 py-4 border-2 border-gray-200 rounded-xl text-base focus:border-primary-500 transition-all"
-                    />
-                    <button 
-                        onclick="startProcessing()"
-                        class="btn-primary text-white px-8 py-4 rounded-xl font-semibold text-base shadow-lg flex items-center justify-center gap-2 whitespace-nowrap"
-                    >
-                        <span>✨</span>
-                        <span>Genera Dispensa</span>
-                    </button>
-                </div>
+                <input 
+                    type="text" 
+                    id="youtubeUrl" 
+                    placeholder="https://www.youtube.com/watch?v=..."
+                    class="w-full px-5 py-4 border-2 border-gray-200 rounded-xl text-base focus:border-primary-500 transition-all"
+                />
                 <p class="text-sm text-gray-500 mt-2">
                     💡 Esempio: https://www.youtube.com/watch?v=dQw4w9WgXcQ
                 </p>
@@ -247,8 +238,8 @@
                     </p>
                 </div>
 
-                <!-- Category Selection (hidden by default) -->
-                <div id="categorySelection" class="hidden mt-6 p-6 bg-white border border-gray-200 rounded-xl shadow-sm">
+                <!-- Category Selection -->
+                <div id="categorySelection" class="mt-6 p-6 bg-white border border-gray-200 rounded-xl shadow-sm">
                     <h3 class="text-lg font-bold text-gray-800 mb-4">📁 Seleziona la cartella di destinazione</h3>
                     <div class="mb-4">
                         <label for="categorySelect" class="block text-sm font-medium text-gray-700 mb-2">
@@ -266,7 +257,7 @@
                             <option value="VARIE">VARIE</option>
                         </select>
                     </div>
-                    <div class="mb-4">
+                    <div class="mb-6">
                         <label for="categoryCustom" class="block text-sm font-medium text-gray-700 mb-2">
                             Oppure inserisci un nome personalizzato (tutto in MAIUSCOLE):
                         </label>
@@ -279,11 +270,11 @@
                         />
                     </div>
                     <button 
-                        id="confirmCategoryBtn"
-                        onclick="confirmCategoryAndSave()"
-                        class="w-full bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white px-6 py-3 rounded-lg font-semibold transition-all shadow-lg hover:shadow-xl"
+                        onclick="startProcessing()"
+                        class="w-full btn-primary text-white px-6 py-4 rounded-xl font-semibold text-base shadow-lg hover:shadow-xl transition-all flex items-center justify-center gap-2"
                     >
-                        💾 Conferma e Salva
+                        <span>✨</span>
+                        <span>Genera Dispensa</span>
                     </button>
                 </div>
             </div>
@@ -1243,30 +1234,111 @@ Lo sviluppo responsabile dell'AI richiede attenzione a:
                 updateProgress(65, 2, '✅ Dispensa generata con successo!');
                 await new Promise(resolve => setTimeout(resolve, 800));
 
-                // Estrai temi dall'abstract per suggerire categoria
-                const themesMatch = dispensa.match(/\*\*Temi Trattati:\*\* (.+)/);
-                const themes = themesMatch ? themesMatch[1] : '';
-                const suggestedCategory = selectCategory(themes);
+                // Step 3: Salvataggio su Google Drive con categoria già selezionata
+                updateProgress(70, 3, '💾 Creazione documento Google Docs...');
+                await new Promise(resolve => setTimeout(resolve, 500));
                 
-                // Imposta la categoria suggerita nel menu
-                document.getElementById('categorySelect').value = suggestedCategory;
+                updateProgress(75, 3, `💾 Salvataggio nella cartella "${category}"...`);
                 
-                // Mostra il menu di selezione categoria
-                document.getElementById('categorySelection').classList.remove('hidden');
-                updateProgress(70, 3, '📁 Seleziona la cartella di destinazione...');
+                // Verifica autenticazione prima di salvare
+                if (!googleAccessToken) {
+                    throw new Error('Autenticazione Google richiesta. Clicca su "Accedi con Google" prima di generare la dispensa.');
+                }
                 
-                // Salva i dati temporanei per il salvataggio successivo
-                currentVideoData.pendingSave = {
-                    dispensa: dispensa,
-                    videoData: videoData,
-                    url: url,
-                    themes: themes
-                };
+                const driveResult = await saveToGoogleDrive(dispensa, videoData.title, category);
+                currentVideoData.driveResult = driveResult;
                 
-                // Attendi che l'utente selezioni la categoria (la funzione confirmCategoryAndSave continuerà)
-                return; // Esci dalla funzione, il salvataggio continuerà quando l'utente conferma
+                updateProgress(85, 3, '✅ Documento salvato su Google Drive!');
+                await new Promise(resolve => setTimeout(resolve, 800));
 
-                // Questo codice è stato spostato nella funzione confirmCategoryAndSave()
+                // Step 4: Invio email e aggiornamento sheet
+                updateProgress(88, 4, '📧 Preparazione email di notifica...');
+                
+                // Estrai abstract
+                let abstract = 'Dispensa didattica generata da video YouTube';
+                
+                console.log('=== DEBUG ESTRAZIONE ABSTRACT ===');
+                console.log('Lunghezza dispensa:', dispensa.length);
+                console.log('Preview dispensa (primi 1000 caratteri):', dispensa.substring(0, 1000));
+                
+                const patterns = [
+                    /ABSTRACT\s*\n\n(.+?)(?=\n\nCORPO DELLA DISPENSA|$)/is,
+                    /##\s*ABSTRACT\s*\n\n(.+?)(?=\n\n##\s*CORPO|$)/is,
+                    /(?:##\s*)?2\.\s*ABSTRACT\s*\n\n(.+?)(?=\n\n(?:##\s*)?(?:3\.|CORPO)|$)/is,
+                    /(?:##\s*)?ABSTRACT\s*\n\n(.+?)(?=\n\n(?:##\s*)?(?:CORPO|#)|$)/is,
+                    /^ABSTRACT\s*\n\n(.+?)(?=\n\n(?:##\s*)?(?:CORPO|#)|$)/ims,
+                    /ABSTRACT[:\s]*\n\n(.+?)(?=\n\n(?:##\s*)?(?:CORPO|METADATI|#)|$)/is
+                ];
+                
+                for (let i = 0; i < patterns.length; i++) {
+                    const pattern = patterns[i];
+                    const match = dispensa.match(pattern);
+                    
+                    if (match && match[1]) {
+                        let extractedAbstract = match[1]
+                            .trim()
+                            .replace(/\*\*/g, '')
+                            .replace(/\*/g, '')
+                            .replace(/#/g, '')
+                            .replace(/^\s*[-*•]\s+/gm, '')
+                            .replace(/\n+/g, ' ')
+                            .replace(/\s+/g, ' ')
+                            .trim();
+                        
+                        if (extractedAbstract.length > 50) {
+                            abstract = extractedAbstract.substring(0, 1000);
+                            break;
+                        }
+                    }
+                }
+                
+                if (abstract === 'Dispensa didattica generata da video YouTube' || abstract.length < 50) {
+                    const abstractIndex = dispensa.search(/(?:##\s*)?2\.\s*ABSTRACT|ABSTRACT/i);
+                    const nextSectionIndex = dispensa.search(/(?:##\s*)?3\.|##\s*CORPO/i);
+                    
+                    if (abstractIndex !== -1 && nextSectionIndex !== -1 && nextSectionIndex > abstractIndex) {
+                        let alternativeAbstract = dispensa.substring(abstractIndex, nextSectionIndex)
+                            .replace(/(?:##\s*)?2\.\s*ABSTRACT|ABSTRACT/gi, '')
+                            .trim()
+                            .replace(/\*\*/g, '')
+                            .replace(/\*/g, '')
+                            .replace(/#/g, '')
+                            .replace(/^\s*[-*•]\s+/gm, '')
+                            .replace(/\n+/g, ' ')
+                            .replace(/\s+/g, ' ')
+                            .trim();
+                        
+                        if (alternativeAbstract.length > 50) {
+                            abstract = alternativeAbstract.substring(0, 1000);
+                        }
+                    }
+                }
+                
+                console.log('=== FINE DEBUG ESTRAZIONE ABSTRACT ===');
+                
+                await sendEmail(driveResult.docUrl, url, abstract, videoData.title);
+                
+                updateProgress(93, 4, '✅ Email inviata!');
+                await new Promise(resolve => setTimeout(resolve, 500));
+                
+                updateProgress(96, 4, '📊 Aggiornamento registro Google Sheets...');
+                
+                await updateGoogleSheet({
+                    timestamp: new Date().toISOString(),
+                    title: videoData.title,
+                    url: url,
+                    docUrl: driveResult.docUrl,
+                    category: category,
+                    abstract: abstract
+                });
+                
+                console.log('✅ Dati inviati a Google Sheets');
+                
+                updateProgress(100, 4, '✅ Processo completato!');
+                await new Promise(resolve => setTimeout(resolve, 1000));
+                
+                // Mostra risultati
+                showResults(videoData.title, driveResult.docUrl, category, abstract);
 
             } catch (error) {
                 console.error('Errore durante l\'elaborazione:', error);
@@ -1323,8 +1395,11 @@ Lo sviluppo responsabile dell'AI richiede attenzione a:
 
         function resetApp() {
             document.getElementById('youtubeUrl').value = '';
+            document.getElementById('categoryCustom').value = '';
+            document.getElementById('categorySelect').value = 'FORMAZIONE';
             document.getElementById('progressSection').classList.add('hidden');
             document.getElementById('resultSection').classList.add('hidden');
+            document.getElementById('categorySelection').classList.remove('hidden');
             document.getElementById('progressBar').style.width = '0%';
             document.getElementById('progressPercent').textContent = '0%';
             
