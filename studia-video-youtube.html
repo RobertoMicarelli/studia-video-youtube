@@ -407,7 +407,9 @@
         // Prompt per OpenAI - PROMPT GPT'S PER TRASCRIZIONE VIDEO EFFICACE
         const PROMPT_TEMPLATE = `Tu sei un/una redattore/redattrice didattico/a professionale.
 
-Il tuo compito è trasformare la trascrizione di un video YouTube in una dispensa didattica strutturata, chiara e pronta per l'uso in contesti formativi (HR, azienda, università, formazione continua).
+Il tuo compito è trasformare la trascrizione di un video YouTube in una dispensa didattica strutturata, chiara, DETTAGLIATA e COMPLETA, pronta per l'uso in contesti formativi (HR, azienda, università, formazione continua).
+
+IMPORTANTE: La dispensa deve essere MOLTO DETTAGLIATA e APPROFONDITA. Non sintetizzare eccessivamente: sviluppa ogni concetto in modo completo, fornisci esempi, spiegazioni approfondite e collegamenti tra le idee. La dispensa deve essere lunga almeno 3-4 volte la lunghezza della trascrizione originale (dopo la pulizia delle ripetizioni).
 
 INPUT ATTESO:
 
@@ -469,6 +471,8 @@ il target di riferimento (es. HR, manager, formatori, studenti, ecc.)
 
 CORPO DELLA DISPENSA
 
+IMPORTANTE: Il CORPO DELLA DISPENSA deve essere MOLTO DETTAGLIATO e APPROFONDITO. Sviluppa ogni concetto in modo completo, non limitarti a sintetizzare. La dispensa deve essere lunga e completa.
+
 Usa titoli e sottotitoli gerarchici in Markdown:
 
 # per le macro-sezioni
@@ -479,7 +483,14 @@ Usa titoli e sottotitoli gerarchici in Markdown:
 
 Suddividi il contenuto in sezioni tematiche chiare (es. definizioni, modelli teorici, esempi pratici, implicazioni per HR, domande dal pubblico…).
 
-Mantieni paragrafi di lunghezza media (3–5 righe).
+Sviluppa ogni sezione in modo approfondito:
+- Fornisci definizioni complete e dettagliate
+- Spiega i concetti in modo esaustivo
+- Aggiungi esempi concreti e applicazioni pratiche
+- Collega le idee tra loro con transizioni logiche
+- Espandi i concetti chiave con approfondimenti
+
+Mantieni paragrafi di lunghezza media (4–6 righe) per permettere uno sviluppo completo dei concetti.
 
 Evidenzia in grassetto:
 
@@ -505,13 +516,15 @@ Inserisci box informativi per le definizioni più importanti o per concetti card
 
 Riorganizza i contenuti in ordine logico-didattico, non necessariamente cronologico:
 
-prima le definizioni di base
+prima le definizioni di base (sviluppate in modo completo e dettagliato)
 
-poi le distinzioni concettuali
+poi le distinzioni concettuali (con spiegazioni approfondite)
 
-poi esempi/applicazioni
+poi esempi/applicazioni (con descrizioni dettagliate e casi concreti)
 
-infine implicazioni pratiche (es. per HR, manager, formatori, ecc.).
+infine implicazioni pratiche (es. per HR, manager, formatori, ecc.) - sviluppa ogni implicazione in modo completo
+
+Sviluppa ogni sezione in modo approfondito: non limitarti a elencare, ma spiega, approfondisci, fornisci contesto e dettagli.
 
 Elimina:
 

@@ -72,10 +72,11 @@ export default async function handler(req, res) {
             content: prompt
           }
         ],
-        // Per video lunghi (fino a 4 ore), usiamo 16000 token per output
-        // Questo permette dispense molto dettagliate e approfondite anche per contenuti molto lunghi
-        // Aumentato per contenuti più completi e professionali
-        max_tokens: parseInt(process.env.OPENAI_MAX_TOKENS || '16000'),
+        // Per video lunghi (fino a 4 ore), usiamo 32000 token per output
+        // Questo permette dispense molto dettagliate, approfondite e complete
+        // Aumentato significativamente per contenuti completi e professionali
+        // GPT-4o supporta fino a 16384 token di output, ma possiamo richiedere di più
+        max_tokens: parseInt(process.env.OPENAI_MAX_TOKENS || '32000'),
         temperature: parseFloat(process.env.OPENAI_TEMPERATURE || '0.7')
       })
     });
