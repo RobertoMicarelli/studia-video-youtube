@@ -221,10 +221,132 @@ export default async function handler(req, res) {
           currentIndex += line.length + 1;
         });
 
+        // Usa un approccio migliore: leggi il documento e trova i paragrafi corretti
+        const formatRequests = [];
+        
+        // Funzione helper per estrarre testo da un elemento
+        const getParagraphText = (para) => {
+          if (!para.elements) return '';
+          return para.elements
+            .filter(el => el.textRun)
+            .map(el => el.textRun.content || '')
+            .join('');
+        };
+
+        // Analizza tutti i paragrafi nel documento
+        const processParagraphs = (content) => {
+          content.forEach(element => {
+            if (element.paragraph) {
+              const para = element.paragraph;
+              const paraText = getParagraphText(para);
+              const trimmedText = paraText.trim();
+              
+              // Macro-sezioni (#) - HEADING_1
+              if (trimmedText.match(/^#\s+[^#]/)) {
+                formatRequests.push({
+                  updateParagraphStyle: {
+                    range: {
+                      startIndex: element.startIndex || 1,
+                      endIndex: element.endIndex || (element.startIndex || 1) + paraText.length
+                    },
+                    paragraphStyle: {
+                      namedStyleType: 'HEADING_1'
+                    },
+                    fields: 'namedStyleType'
+                  }
+                });
+                // Rimuovi # dal testo
+                formatRequests.push({
+                  deleteContentRange: {
+                    range: {
+                      startIndex: element.startIndex || 1,
+                      endIndex: (element.startIndex || 1) + 2
+                    }
+                  }
+                });
+              }
+              // Sezioni interne (##) - HEADING_2
+              else if (trimmedText.match(/^##\s+[^#]/)) {
+                formatRequests.push({
+                  updateParagraphStyle: {
+                    range: {
+                      startIndex: element.startIndex || 1,
+                      endIndex: element.endIndex || (element.startIndex || 1) + paraText.length
+                    },
+                    paragraphStyle: {
+                      namedStyleType: 'HEADING_2'
+                    },
+                    fields: 'namedStyleType'
+                  }
+                });
+                // Rimuovi ## dal testo
+                formatRequests.push({
+                  deleteContentRange: {
+                    range: {
+                      startIndex: element.startIndex || 1,
+                      endIndex: (element.startIndex || 1) + 3
+                    }
+                  }
+                });
+              }
+              // Sotto-paragrafi (###) - HEADING_3
+              else if (trimmedText.match(/^###\s+/)) {
+                formatRequests.push({
+                  updateParagraphStyle: {
+                    range: {
+                      startIndex: element.startIndex || 1,
+                      endIndex: element.endIndex || (element.startIndex || 1) + paraText.length
+                    },
+                    paragraphStyle: {
+                      namedStyleType: 'HEADING_3'
+                    },
+                    fields: 'namedStyleType'
+                  }
+                });
+                // Rimuovi ### dal testo
+                formatRequests.push({
+                  deleteContentRange: {
+                    range: {
+                      startIndex: element.startIndex || 1,
+                      endIndex: (element.startIndex || 1) + 4
+                    }
+                  }
+                });
+              }
+              // Pattern legacy per compatibilità
+              else if (trimmedText.match(/^METADATI DEL VIDEO|^ABSTRACT|^CORPO DELLA DISPENSA|^SEZIONE FINALE|^Punti chiave da ricordare|^Approfondimenti suggeriti|^Applicazioni pratiche/)) {
+                formatRequests.push({
+                  updateParagraphStyle: {
+                    range: {
+                      startIndex: element.startIndex || 1,
+                      endIndex: element.endIndex || (element.startIndex || 1) + paraText.length
+                    },
+                    paragraphStyle: {
+                      namedStyleType: 'HEADING_1'
+                    },
+                    fields: 'namedStyleType'
+                  }
+                });
+              }
+            }
+          });
+        };
+
+        processParagraphs(content);
+
         // Applica formattazione in batch (max 50 richieste per volta)
-        if (requests.length > 0) {
-          for (let i = 0; i < requests.length; i += 50) {
-            const batch = requests.slice(i, i + 50);
+        // Ordina le richieste per indice (dalla fine all'inizio per deleteContentRange)
+        formatRequests.sort((a, b) => {
+          const aIdx = a.deleteContentRange?.range?.startIndex || 
+                      a.updateParagraphStyle?.range?.startIndex || 0;
+          const bIdx = b.deleteContentRange?.range?.startIndex || 
+                      b.updateParagraphStyle?.range?.startIndex || 0;
+          return bIdx - aIdx; // Ordine inverso per evitare problemi con gli indici
+        });
+
+        if (formatRequests.length > 0) {
+          for (let i = 0; i < formatRequests.length; i += 50) {
+            const batch = formatRequests.slice(i, i + 50);
             const formatResponse = await fetch(
               `https://docs.googleapis.com/v1/documents/${fileId}:batchUpdate`,
               {
@@ -240,78 +362,6 @@ export default async function handler(req, res) {
             if (!formatResponse.ok) {
               const errorData = await formatResponse.json().catch(() => ({}));
               console.warn('Errore applicazione formattazione batch:', errorData);
-            }
-          }
-          
-          // Rimuovi i simboli # dopo aver applicato la formattazione
-          const removeHashesRequest = {
-            requests: [
-              {
-                replaceAllText: {
-                  containsText: {
-                    text: '### ',
-                    matchCase: false
-                  },
-                  replaceText: ''
-                }
-              },
-              {
-                replaceAllText: {
-                  containsText: {
-                    text: '## ',
-                    matchCase: false
-                  },
-                  replaceText: ''
-                }
-              },
-              {
-                replaceAllText: {
-                  containsText: {
-                    text: '# ',
-                    matchCase: false
-                  },
-                  replaceText: ''
-                }
-              }
-            ]
-          };
-          
-          const removeHashesResponse = await fetch(
-            `https://docs.googleapis.com/v1/documents/${fileId}:batchUpdate`,
-            {
-              method: 'POST',
-              headers: {
-                'Authorization': `Bearer ${accessToken}`,
-                'Content-Type': 'application/json'
-              },
-              body: JSON.stringify(removeHashesRequest)
-            }
-          );
-          
-          if (!removeHashesResponse.ok) {
-            const errorData = await removeHashesResponse.json().catch(() => ({}));
-            console.warn('Errore rimozione simboli #:', errorData);
-          }
-        }
-
-        // Applica formattazione in batch (max 50 richieste per volta)
-        if (requests.length > 0) {
-          for (let i = 0; i < requests.length; i += 50) {
-            const batch = requests.slice(i, i + 50);
-            const formatResponse = await fetch(
-              `https://docs.googleapis.com/v1/documents/${fileId}:batchUpdate`,
-              {
-                method: 'POST',
-                headers: {
-                  'Authorization': `Bearer ${accessToken}`,
-                  'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({ requests: batch })
-              }
-            );
-            
-            if (!formatResponse.ok) {
-              console.warn('Errore applicazione formattazione batch:', await formatResponse.json().catch(() => ({})));
             }
           }
         }
