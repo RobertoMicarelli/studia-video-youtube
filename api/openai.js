@@ -4,13 +4,19 @@
  * Supporta video fino a 4 ore (240 minuti)
  * 
  * MODELLI CONSIGLIATI:
- * - gpt-4o: Migliore qualità, contenuti più dettagliati e approfonditi (default, consigliato)
+ * - gpt-5.2: MIGLIORE - Contesto 400K token, output fino a 128K token (consigliato per contenuti molto lunghi)
+ * - gpt-4o: Buona qualità, contenuti dettagliati (default)
  * - gpt-4o-2024-08-06: Versione specifica di GPT-4o (se disponibile)
  * - gpt-4o-mini: Più economico, qualità buona ma contenuti meno dettagliati
  * 
  * COSTI APPROSSIMATIVI (per 1M token):
+ * - gpt-5.2: Input $1.75, Output $14.00 (migliore per contenuti lunghi e dettagliati)
  * - gpt-4o: Input $2.50, Output $10.00
  * - gpt-4o-mini: Input $0.15, Output $0.60
+ * 
+ * LIMITI OUTPUT:
+ * - gpt-5.2: fino a 128.000 token (ideale per dispense molto dettagliate)
+ * - gpt-4o: fino a 16.384 token
  * 
  * Configura OPENAI_MODEL in Vercel per cambiare modello (default: gpt-4o)
  */
@@ -57,10 +63,10 @@ export default async function handler(req, res) {
         'Authorization': `Bearer ${apiKey}`
       },
       body: JSON.stringify({
-        // Usa GPT-4o per contenuti più dettagliati e professionali
-        // GPT-4o-mini è più economico ma produce contenuti meno approfonditi
-        // Per versioni specifiche, prova: gpt-4o-2024-08-06 o gpt-4o-2024-11-20
-        // Nota: GPT-5.2 non esiste ancora ufficialmente, usa gpt-4o o una versione specifica
+        // Modello da utilizzare (configurabile tramite OPENAI_MODEL)
+        // gpt-5.2: Migliore per contenuti molto lunghi (output fino a 128K token)
+        // gpt-4o: Buona qualità, output fino a 16K token (default)
+        // gpt-4o-mini: Più economico, qualità buona ma meno dettagliata
         model: process.env.OPENAI_MODEL || 'gpt-4o',
         messages: [
           {
@@ -72,9 +78,10 @@ export default async function handler(req, res) {
             content: prompt
           }
         ],
-        // Per video lunghi (fino a 4 ore), usiamo 16384 token per output (massimo supportato da GPT-4o)
-        // Questo permette dispense molto dettagliate, approfondite e complete
-        // GPT-4o supporta fino a 16384 token di output (limite massimo dell'API)
+        // Token massimi per output
+        // gpt-5.2: supporta fino a 128.000 token (consigliato per contenuti molto dettagliati)
+        // gpt-4o: supporta fino a 16.384 token
+        // Default: 16384 per gpt-4o, ma se usi gpt-5.2 puoi aumentare fino a 100000-128000
         max_tokens: parseInt(process.env.OPENAI_MAX_TOKENS || '16384'),
         temperature: parseFloat(process.env.OPENAI_TEMPERATURE || '0.7')
       })

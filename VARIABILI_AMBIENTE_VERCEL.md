@@ -22,17 +22,23 @@ Questa guida elenca tutte le variabili d'ambiente necessarie per il funzionament
 |-----------|-------------|---------|--------------|
 | `OPENAI_API_KEY` | Chiave API di OpenAI | `sk-proj-...` | ✅ Sì |
 | `OPENAI_MODEL` | Modello da utilizzare | `gpt-4o` | ❌ No (default: `gpt-4o`) |
-| `OPENAI_MAX_TOKENS` | Token massimi per output | `16000` | ❌ No (default: `16000`) |
+| `OPENAI_MAX_TOKENS` | Token massimi per output | `16384` | ❌ No (default: `16384` per gpt-4o, `100000` per gpt-5.2) |
 | `OPENAI_TEMPERATURE` | Creatività del modello (0-1) | `0.7` | ❌ No (default: `0.7`) |
 
 **Modelli disponibili:**
-- `gpt-4o` - **Consigliato** - Migliore qualità, contenuti dettagliati
+- `gpt-5.2` - **MIGLIORE per contenuti lunghi** - Contesto 400K, output fino a 128K token
+- `gpt-4o` - Buona qualità, contenuti dettagliati (default)
 - `gpt-4o-2024-08-06` - Versione specifica di GPT-4o
 - `gpt-4o-mini` - Più economico, qualità buona ma meno dettagliata
 
 **Costi approssimativi (per 1M token):**
+- `gpt-5.2`: Input $1.75, Output $14.00 (migliore per contenuti molto lunghi)
 - `gpt-4o`: Input $2.50, Output $10.00
 - `gpt-4o-mini`: Input $0.15, Output $0.60
+
+**Limiti output:**
+- `gpt-5.2`: fino a 128.000 token (ideale per dispense molto dettagliate)
+- `gpt-4o`: fino a 16.384 token
 
 ---
 
@@ -146,10 +152,17 @@ NOTIFICATION_EMAIL=roberto.micarelli@gmail.com
 
 ## ⚙️ Configurazioni Consigliate
 
-### Per Contenuti di Alta Qualità (Consigliato)
+### Per Contenuti Molto Dettagliati e Lunghi (MIGLIORE - Consigliato)
+```
+OPENAI_MODEL=gpt-5.2
+OPENAI_MAX_TOKENS=100000
+OPENAI_TEMPERATURE=0.7
+```
+
+### Per Contenuti di Alta Qualità (Alternativa)
 ```
 OPENAI_MODEL=gpt-4o
-OPENAI_MAX_TOKENS=16000
+OPENAI_MAX_TOKENS=16384
 OPENAI_TEMPERATURE=0.7
 ```
 
