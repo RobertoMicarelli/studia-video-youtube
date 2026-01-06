@@ -179,15 +179,6 @@ export default async function handler(req, res) {
                     fields: 'namedStyleType'
                   }
                 });
-                // Rimuovi # dal testo
-                formatRequests.push({
-                  deleteContentRange: {
-                    range: {
-                      startIndex: element.startIndex || 1,
-                      endIndex: (element.startIndex || 1) + 2
-                    }
-                  }
-                });
               }
               // Sezioni interne (##) - HEADING_2
               else if (trimmedText.match(/^##\s+[^#]/)) {
@@ -203,15 +194,6 @@ export default async function handler(req, res) {
                     fields: 'namedStyleType'
                   }
                 });
-                // Rimuovi ## dal testo
-                formatRequests.push({
-                  deleteContentRange: {
-                    range: {
-                      startIndex: element.startIndex || 1,
-                      endIndex: (element.startIndex || 1) + 3
-                    }
-                  }
-                });
               }
               // Sotto-paragrafi (###) - HEADING_3
               else if (trimmedText.match(/^###\s+/)) {
@@ -225,15 +207,6 @@ export default async function handler(req, res) {
                       namedStyleType: 'HEADING_3'
                     },
                     fields: 'namedStyleType'
-                  }
-                });
-                // Rimuovi ### dal testo
-                formatRequests.push({
-                  deleteContentRange: {
-                    range: {
-                      startIndex: element.startIndex || 1,
-                      endIndex: (element.startIndex || 1) + 4
-                    }
                   }
                 });
               }
@@ -259,15 +232,6 @@ export default async function handler(req, res) {
         processParagraphs(content);
 
         // Applica formattazione in batch (max 50 richieste per volta)
-        // Ordina le richieste per indice (dalla fine all'inizio per deleteContentRange)
-        formatRequests.sort((a, b) => {
-          const aIdx = a.deleteContentRange?.range?.startIndex || 
-                      a.updateParagraphStyle?.range?.startIndex || 0;
-          const bIdx = b.deleteContentRange?.range?.startIndex || 
-                      b.updateParagraphStyle?.range?.startIndex || 0;
-          return bIdx - aIdx; // Ordine inverso per evitare problemi con gli indici
-        });
-
         if (formatRequests.length > 0) {
           for (let i = 0; i < formatRequests.length; i += 50) {
             const batch = formatRequests.slice(i, i + 50);
@@ -288,6 +252,56 @@ export default async function handler(req, res) {
               console.warn('Errore applicazione formattazione batch:', errorData);
             }
           }
+        }
+        
+        // Rimuovi i simboli # dopo aver applicato la formattazione (usa replaceAllText)
+        const removeHashesRequest = {
+          requests: [
+            {
+              replaceAllText: {
+                containsText: {
+                  text: '### ',
+                  matchCase: false
+                },
+                replaceText: ''
+              }
+            },
+            {
+              replaceAllText: {
+                containsText: {
+                  text: '## ',
+                  matchCase: false
+                },
+                replaceText: ''
+              }
+            },
+            {
+              replaceAllText: {
+                containsText: {
+                  text: '# ',
+                  matchCase: false
+                },
+                replaceText: ''
+              }
+            }
+          ]
+        };
+        
+        const removeHashesResponse = await fetch(
+          `https://docs.googleapis.com/v1/documents/${fileId}:batchUpdate`,
+          {
+            method: 'POST',
+            headers: {
+              'Authorization': `Bearer ${accessToken}`,
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(removeHashesRequest)
+          }
+        );
+        
+        if (!removeHashesResponse.ok) {
+          const errorData = await removeHashesResponse.json().catch(() => ({}));
+          console.warn('Errore rimozione simboli #:', errorData);
         }
       }
     }
