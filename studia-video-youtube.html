@@ -1183,6 +1183,7 @@ Lo sviluppo responsabile dell'AI richiede attenzione a:
                 updateProgress(88, 4, '📧 Preparazione email di notifica...');
                 
                 // Estrai abstract con regex più robusta e flessibile
+                // Il nuovo prompt genera ABSTRACT come sezione separata
                 let abstract = 'Dispensa didattica generata da video YouTube';
                 
                 console.log('=== DEBUG ESTRAZIONE ABSTRACT ===');
@@ -1190,18 +1191,20 @@ Lo sviluppo responsabile dell'AI richiede attenzione a:
                 console.log('Preview dispensa (primi 1000 caratteri):', dispensa.substring(0, 1000));
                 
                 // Prova diversi pattern per trovare l'abstract
-                // Pattern più flessibili che gestiscono vari formati
+                // Pattern più flessibili che gestiscono vari formati del nuovo prompt
                 const patterns = [
-                    // Pattern principale: ## 2. ABSTRACT seguito da testo (gestisce anche senza ##)
-                    /(?:##\s*)?2\.\s*ABSTRACT\s*\n\n(.+?)(?=\n\n(?:##\s*)?3\.|$)/is,
+                    // Pattern principale: ABSTRACT seguito da testo fino a CORPO DELLA DISPENSA
+                    /ABSTRACT\s*\n\n(.+?)(?=\n\nCORPO DELLA DISPENSA|$)/is,
+                    // Pattern con ## ABSTRACT
+                    /##\s*ABSTRACT\s*\n\n(.+?)(?=\n\n##\s*CORPO|$)/is,
+                    // Pattern con 2. ABSTRACT
+                    /(?:##\s*)?2\.\s*ABSTRACT\s*\n\n(.+?)(?=\n\n(?:##\s*)?(?:3\.|CORPO)|$)/is,
                     // Pattern senza numerazione
-                    /(?:##\s*)?ABSTRACT\s*\n\n(.+?)(?=\n\n(?:##\s*)?3\.|$)/is,
+                    /(?:##\s*)?ABSTRACT\s*\n\n(.+?)(?=\n\n(?:##\s*)?(?:CORPO|#)|$)/is,
                     // Pattern con solo "ABSTRACT" come titolo
-                    /^ABSTRACT\s*\n\n(.+?)(?=\n\n(?:##\s*)?3\.|$)/ims,
+                    /^ABSTRACT\s*\n\n(.+?)(?=\n\n(?:##\s*)?(?:CORPO|#)|$)/ims,
                     // Pattern che cerca qualsiasi sezione "ABSTRACT" seguita da testo
-                    /ABSTRACT[:\s]*\n\n(.+?)(?=\n\n(?:##\s*)?(?:3\.|CORPO|METADATI)|$)/is,
-                    // Pattern più generico: cerca testo dopo "ABSTRACT" fino alla prossima sezione principale
-                    /(?:##\s*)?2\.\s*ABSTRACT\s*\n+([^\n#]+(?:\n+[^\n#]+)*?)(?=\n+##|$)/is
+                    /ABSTRACT[:\s]*\n\n(.+?)(?=\n\n(?:##\s*)?(?:CORPO|METADATI|#)|$)/is
                 ];
                 
                 for (let i = 0; i < patterns.length; i++) {

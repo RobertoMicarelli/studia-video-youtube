@@ -90,16 +90,18 @@ export default async function handler(req, res) {
     const fileId = file.id;
 
     // Prepara il contenuto: converti markdown in testo formattato
-    // Rimuovi tutti i simboli markdown e tag H1/H2/H3
+    // Il nuovo prompt usa # per macro-sezioni, ## per sezioni interne, ### per sotto-paragrafi
+    // Rimuovi tag H1/H2/H3 se presenti
     let textContent = content
       .replace(/H1:\s*/gi, '') // Rimuovi "H1:" o "h1:"
       .replace(/H2:\s*/gi, '') // Rimuovi "H2:" o "h2:"
       .replace(/H3:\s*/gi, '') // Rimuovi "H3:" o "h3:"
-      .replace(/^#+\s+/gm, '') // Rimuovi # ## ### #### all'inizio delle righe
-      .replace(/\*\*(.+?)\*\*/g, '$1') // Rimuovi ** (grassetto)
-      .replace(/\*(.+?)\*/g, '$1') // Rimuovi * (corsivo)
+      .replace(/\*\*(.+?)\*\*/g, '$1') // Rimuovi ** (grassetto) - verrà riapplicato dopo
+      .replace(/\*(.+?)\*/g, '$1') // Rimuovi * (corsivo) - verrà riapplicato dopo
       .replace(/\[([^\]]+)\]\([^\)]+\)/g, '$1') // Rimuovi link markdown [testo](url) -> testo
       .trim();
+    
+    // Manteniamo i simboli # per poterli riconoscere e formattare correttamente
 
     // Inserisci il testo nel documento usando Google Docs API
     const insertRequest = {
@@ -155,8 +157,8 @@ export default async function handler(req, res) {
             return;
           }
 
-          // Titoli principali (##)
-          if (trimmed.match(/^1\. METADATI|^2\. ABSTRACT|^3\. CORPO|^4\. SEZIONE/)) {
+          // Macro-sezioni (#) - HEADING_1
+          if (trimmed.match(/^#\s+[^#]/)) {
             requests.push({
               updateParagraphStyle: {
                 range: {
@@ -170,8 +172,8 @@ export default async function handler(req, res) {
               }
             });
           }
-          // Sottotitoli (###)
-          else if (trimmed.match(/^###|^##/)) {
+          // Sezioni interne (##) - HEADING_2
+          else if (trimmed.match(/^##\s+[^#]/)) {
             requests.push({
               updateParagraphStyle: {
                 range: {
@@ -185,9 +187,112 @@ export default async function handler(req, res) {
               }
             });
           }
+          // Sotto-paragrafi (###) - HEADING_3
+          else if (trimmed.match(/^###\s+/)) {
+            requests.push({
+              updateParagraphStyle: {
+                range: {
+                  startIndex: currentIndex,
+                  endIndex: currentIndex + line.length
+                },
+                paragraphStyle: {
+                  namedStyleType: 'HEADING_3'
+                },
+                fields: 'namedStyleType'
+              }
+            });
+          }
+          // Pattern legacy per compatibilità
+          else if (trimmed.match(/^METADATI DEL VIDEO|^ABSTRACT|^CORPO DELLA DISPENSA|^SEZIONE FINALE|^Punti chiave da ricordare|^Approfondimenti suggeriti|^Applicazioni pratiche/)) {
+            requests.push({
+              updateParagraphStyle: {
+                range: {
+                  startIndex: currentIndex,
+                  endIndex: currentIndex + line.length
+                },
+                paragraphStyle: {
+                  namedStyleType: 'HEADING_1'
+                },
+                fields: 'namedStyleType'
+              }
+            });
+          }
 
           currentIndex += line.length + 1;
         });
+
+        // Applica formattazione in batch (max 50 richieste per volta)
+        if (requests.length > 0) {
+          for (let i = 0; i < requests.length; i += 50) {
+            const batch = requests.slice(i, i + 50);
+            const formatResponse = await fetch(
+              `https://docs.googleapis.com/v1/documents/${fileId}:batchUpdate`,
+              {
+                method: 'POST',
+                headers: {
+                  'Authorization': `Bearer ${accessToken}`,
+                  'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ requests: batch })
+              }
+            );
+            
+            if (!formatResponse.ok) {
+              const errorData = await formatResponse.json().catch(() => ({}));
+              console.warn('Errore applicazione formattazione batch:', errorData);
+            }
+          }
+          
+          // Rimuovi i simboli # dopo aver applicato la formattazione
+          const removeHashesRequest = {
+            requests: [
+              {
+                replaceAllText: {
+                  containsText: {
+                    text: '### ',
+                    matchCase: false
+                  },
+                  replaceText: ''
+                }
+              },
+              {
+                replaceAllText: {
+                  containsText: {
+                    text: '## ',
+                    matchCase: false
+                  },
+                  replaceText: ''
+                }
+              },
+              {
+                replaceAllText: {
+                  containsText: {
+                    text: '# ',
+                    matchCase: false
+                  },
+                  replaceText: ''
+                }
+              }
+            ]
+          };
+          
+          const removeHashesResponse = await fetch(
+            `https://docs.googleapis.com/v1/documents/${fileId}:batchUpdate`,
+            {
+              method: 'POST',
+              headers: {
+                'Authorization': `Bearer ${accessToken}`,
+                'Content-Type': 'application/json'
+              },
+              body: JSON.stringify(removeHashesRequest)
+            }
+          );
+          
+          if (!removeHashesResponse.ok) {
+            const errorData = await removeHashesResponse.json().catch(() => ({}));
+            console.warn('Errore rimozione simboli #:', errorData);
+          }
+        }
 
         // Applica formattazione in batch (max 50 richieste per volta)
         if (requests.length > 0) {
