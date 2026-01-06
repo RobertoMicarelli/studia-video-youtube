@@ -57,9 +57,9 @@ export default async function handler(req, res) {
             content: prompt
           }
         ],
-        // Per video lunghi (fino a 4 ore), usiamo 8000 token per output
-        // Questo permette dispense dettagliate anche per contenuti molto lunghi
-        max_tokens: parseInt(process.env.OPENAI_MAX_TOKENS || '8000'),
+        // Per video lunghi (fino a 4 ore), usiamo 12000 token per output
+        // Questo permette dispense dettagliate e approfondite anche per contenuti molto lunghi
+        max_tokens: parseInt(process.env.OPENAI_MAX_TOKENS || '12000'),
         temperature: parseFloat(process.env.OPENAI_TEMPERATURE || '0.7')
       })
     });
