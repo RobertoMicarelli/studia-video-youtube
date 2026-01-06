@@ -1,7 +1,13 @@
 /**
- * API Route per OpenAI - Elaborazione trascrizioni con GPT-4o-mini
+ * API Route per OpenAI - Elaborazione trascrizioni
  * Le API keys sono gestite tramite variabili d'ambiente per sicurezza
  * Supporta video fino a 4 ore (240 minuti)
+ * 
+ * MODELLI CONSIGLIATI:
+ * - gpt-4o: Migliore qualità, contenuti più dettagliati e approfonditi (consigliato per dispense professionali)
+ * - gpt-4o-mini: Più economico, qualità buona ma contenuti meno dettagliati
+ * 
+ * Configura OPENAI_MODEL in Vercel per cambiare modello (default: gpt-4o-mini)
  */
 
 export default async function handler(req, res) {
@@ -46,7 +52,9 @@ export default async function handler(req, res) {
         'Authorization': `Bearer ${apiKey}`
       },
       body: JSON.stringify({
-        model: process.env.OPENAI_MODEL || 'gpt-4o-mini',
+        // Usa GPT-4o per contenuti più dettagliati e professionali
+        // GPT-4o-mini è più economico ma produce contenuti meno approfonditi
+        model: process.env.OPENAI_MODEL || 'gpt-4o',
         messages: [
           {
             role: 'system',

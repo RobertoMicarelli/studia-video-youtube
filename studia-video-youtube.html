@@ -449,7 +449,7 @@ Titolo: [Titolo del video o "Non disponibile"]
 
 URL YouTube: {{VIDEO_URL}}
 
-Temi Trattati: #tema1 #tema2 #tema3 … (3–7 hashtag significativi)
+Temi Trattati: {{TEMI_TRATTATI}}
 
 Data di elaborazione: ${new Date().toLocaleDateString('it-IT')}
 
@@ -623,7 +623,10 @@ TRASCRIZIONE:
                 return {
                     title: data.title,
                     author: data.author,
-                    transcript: data.transcript
+                    transcript: data.transcript,
+                    tags: data.tags || [],
+                    temiTrattati: data.temiTrattati || '',
+                    description: data.description || ''
                 };
             } catch (error) {
                 console.error('Errore YouTube API:', error);
@@ -640,7 +643,7 @@ TRASCRIZIONE:
             }
         }
 
-        async function processWithOpenAI(transcript, videoTitle, videoUrl, author) {
+        async function processWithOpenAI(transcript, videoTitle, videoUrl, author, temiTrattati) {
             // Validazione lunghezza trascrizione (limite 4 ore)
             // Stima approssimativa: ~250 token per minuto, 4 ore = ~60.000 token
             const estimatedTokens = Math.ceil(transcript.length / 4);
@@ -650,8 +653,16 @@ TRASCRIZIONE:
                 throw new Error('Video troppo lungo. Il limite massimo è di 4 ore (240 minuti). Per favore, usa un video più corto.');
             }
 
+            // Prepara i metadati per il prompt
+            const temiFinali = temiTrattati || '#tema1 #tema2 #tema3 #tema4 #tema5';
+            const autoreFinale = author || 'Non disponibile';
+            const titoloFinale = videoTitle || 'Non disponibile';
+            
             const prompt = PROMPT_TEMPLATE
                 .replace('{{VIDEO_URL}}', videoUrl)
+                .replace('{{TEMI_TRATTATI}}', temiFinali)
+                .replace('{{AUTORE}}', autoreFinale)
+                .replace('{{TITOLO}}', titoloFinale)
                 .replace('{{TRANSCRIPT}}', transcript);
 
             try {
@@ -1150,7 +1161,8 @@ Lo sviluppo responsabile dell'AI richiede attenzione a:
                     videoData.transcript, 
                     videoData.title, 
                     url, 
-                    videoData.author
+                    videoData.author,
+                    videoData.temiTrattati
                 );
                 currentVideoData.dispensa = dispensa;
 

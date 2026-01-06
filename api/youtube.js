@@ -43,6 +43,23 @@ export default async function handler(req, res) {
     const title = video.snippet.title;
     const author = video.snippet.channelTitle;
     const description = video.snippet.description;
+    const tags = video.snippet.tags || []; // Array di tag del video
+    const categoryId = video.snippet.categoryId;
+    const publishedAt = video.snippet.publishedAt;
+
+    // Estrai i temi trattati dai tag del video
+    // Converti i tag in hashtag formattati (max 7 come richiesto)
+    const temiTrattati = tags
+      .slice(0, 7) // Massimo 7 tag
+      .map(tag => {
+        // Converti tag in formato hashtag (rimuovi spazi, caratteri speciali, capitalizza)
+        return '#' + tag
+          .replace(/[^a-zA-Z0-9\s]/g, '') // Rimuovi caratteri speciali
+          .replace(/\s+/g, '') // Rimuovi spazi
+          .replace(/([a-z])([A-Z])/g, '$1$2') // Mantieni camelCase
+          .substring(0, 30); // Limita lunghezza
+      })
+      .join(' ');
 
     // Per la trascrizione, usa un servizio esterno o backend dedicato
     // Qui simuliamo l'estrazione (in produzione, usa youtube-transcript-api su backend)
@@ -72,7 +89,10 @@ export default async function handler(req, res) {
       author,
       transcript: transcript || description,
       videoId,
-      publishedAt: video.snippet.publishedAt
+      publishedAt,
+      tags: tags,
+      temiTrattati: temiTrattati || '', // Hashtag formattati
+      description: description
     });
 
   } catch (error) {
