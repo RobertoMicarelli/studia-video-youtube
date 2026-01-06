@@ -1201,7 +1201,18 @@ Lo sviluppo responsabile dell'AI richiede attenzione a:
                 return;
             }
 
-            // Mostra sezione progresso
+            // Ottieni la categoria selezionata
+            const selectedCategory = document.getElementById('categorySelect').value;
+            const customCategory = document.getElementById('categoryCustom').value.trim();
+            const category = customCategory || selectedCategory;
+            
+            if (!category) {
+                alert('⚠️ Per favore, seleziona una cartella o inserisci un nome personalizzato');
+                return;
+            }
+
+            // Nascondi sezione categoria e mostra sezione progresso
+            document.getElementById('categorySelection').classList.add('hidden');
             document.getElementById('progressSection').classList.remove('hidden');
             document.getElementById('resultSection').classList.add('hidden');
 
