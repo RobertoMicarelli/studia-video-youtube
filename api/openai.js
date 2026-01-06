@@ -55,6 +55,39 @@ export default async function handler(req, res) {
       return res.status(500).json({ error: 'OpenAI API key non configurata' });
     }
 
+    // Determina il modello e i parametri corretti
+    const model = process.env.OPENAI_MODEL || 'gpt-4o';
+    const maxTokens = parseInt(process.env.OPENAI_MAX_TOKENS || '16384');
+    const temperature = parseFloat(process.env.OPENAI_TEMPERATURE || '0.7');
+    
+    // GPT-5.2 usa max_completion_tokens invece di max_tokens
+    const isGPT52 = model.includes('gpt-5.2') || model === 'gpt-5.2';
+    
+    // Prepara il body della richiesta
+    const requestBody = {
+      model: model,
+      messages: [
+        {
+          role: 'system',
+          content: 'Sei un assistente esperto nella creazione di dispense didattiche professionali da trascrizioni video.'
+        },
+        {
+          role: 'user',
+          content: prompt
+        }
+      ],
+      temperature: temperature
+    };
+    
+    // Aggiungi il parametro corretto per i token di output
+    if (isGPT52) {
+      // GPT-5.2 usa max_completion_tokens (supporta fino a 128.000 token)
+      requestBody.max_completion_tokens = maxTokens;
+    } else {
+      // GPT-4o e altri modelli usano max_tokens (GPT-4o supporta fino a 16.384 token)
+      requestBody.max_tokens = maxTokens;
+    }
+
     // Chiamata a OpenAI
     const response = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
@@ -62,29 +95,7 @@ export default async function handler(req, res) {
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${apiKey}`
       },
-      body: JSON.stringify({
-        // Modello da utilizzare (configurabile tramite OPENAI_MODEL)
-        // gpt-5.2: Migliore per contenuti molto lunghi (output fino a 128K token)
-        // gpt-4o: Buona qualità, output fino a 16K token (default)
-        // gpt-4o-mini: Più economico, qualità buona ma meno dettagliata
-        model: process.env.OPENAI_MODEL || 'gpt-4o',
-        messages: [
-          {
-            role: 'system',
-            content: 'Sei un assistente esperto nella creazione di dispense didattiche professionali da trascrizioni video.'
-          },
-          {
-            role: 'user',
-            content: prompt
-          }
-        ],
-        // Token massimi per output
-        // gpt-5.2: supporta fino a 128.000 token (consigliato per contenuti molto dettagliati)
-        // gpt-4o: supporta fino a 16.384 token
-        // Default: 16384 per gpt-4o, ma se usi gpt-5.2 puoi aumentare fino a 100000-128000
-        max_tokens: parseInt(process.env.OPENAI_MAX_TOKENS || '16384'),
-        temperature: parseFloat(process.env.OPENAI_TEMPERATURE || '0.7')
-      })
+      body: JSON.stringify(requestBody)
     });
 
     if (!response.ok) {
