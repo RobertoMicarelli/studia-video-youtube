@@ -59,6 +59,8 @@ export default async function handler(req, res) {
       body: JSON.stringify({
         // Usa GPT-4o per contenuti più dettagliati e professionali
         // GPT-4o-mini è più economico ma produce contenuti meno approfonditi
+        // Per versioni specifiche, prova: gpt-4o-2024-08-06 o gpt-4o-2024-11-20
+        // Nota: GPT-5.2 non esiste ancora ufficialmente, usa gpt-4o o una versione specifica
         model: process.env.OPENAI_MODEL || 'gpt-4o',
         messages: [
           {
