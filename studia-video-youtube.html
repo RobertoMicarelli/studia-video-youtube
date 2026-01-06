@@ -731,7 +731,7 @@ TRASCRIZIONE:
             }
         }
 
-        async function processWithOpenAI(transcript, videoTitle, videoUrl, author, temiTrattati) {
+        async function processWithOpenAI(transcript, videoTitle, videoUrl, author, temiTrattati, category) {
             // Validazione lunghezza trascrizione (limite 4 ore)
             // Stima approssimativa: ~250 token per minuto, 4 ore = ~60.000 token
             const estimatedTokens = Math.ceil(transcript.length / 4);
@@ -1387,7 +1387,8 @@ Lo sviluppo responsabile dell'AI richiede attenzione a:
                     videoData.title, 
                     url, 
                     videoData.author,
-                    videoData.temiTrattati
+                    videoData.temiTrattati,
+                    category
                 );
                 currentVideoData.dispensa = dispensa;
 
