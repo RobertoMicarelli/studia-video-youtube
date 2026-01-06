@@ -146,6 +146,60 @@ export default async function handler(req, res) {
     }
   }
 
+  // Refresh token
+  if (method === 'POST' && query.action === 'refresh') {
+    const { refresh_token } = req.body;
+    
+    if (!refresh_token) {
+      return res.status(400).json({ error: 'Refresh token non fornito' });
+    }
+
+    const clientId = process.env.GOOGLE_CLIENT_ID;
+    const clientSecret = process.env.GOOGLE_CLIENT_SECRET;
+
+    if (!clientId || !clientSecret) {
+      return res.status(500).json({ error: 'Credenziali Google non configurate' });
+    }
+
+    try {
+      const tokenResponse = await fetch('https://oauth2.googleapis.com/token', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded'
+        },
+        body: new URLSearchParams({
+          refresh_token,
+          client_id: clientId,
+          client_secret: clientSecret,
+          grant_type: 'refresh_token'
+        })
+      });
+
+      if (!tokenResponse.ok) {
+        const errorData = await tokenResponse.json().catch(() => ({}));
+        return res.status(tokenResponse.status).json({ 
+          error: `Errore refresh token: ${errorData.error || tokenResponse.statusText}`,
+          details: errorData.error_description || 'Il refresh token potrebbe essere scaduto o non valido'
+        });
+      }
+
+      const tokens = await tokenResponse.json();
+
+      return res.status(200).json({
+        access_token: tokens.access_token,
+        expires_in: tokens.expires_in || 3600,
+        token_type: tokens.token_type || 'Bearer'
+      });
+
+    } catch (error) {
+      console.error('Errore refresh token:', error);
+      return res.status(500).json({ 
+        error: 'Errore interno del server',
+        message: error.message 
+      });
+    }
+  }
+
   return res.status(405).json({ error: 'Method not allowed' });
 }
 

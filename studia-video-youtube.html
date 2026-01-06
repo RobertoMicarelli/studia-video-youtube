@@ -419,18 +419,54 @@
             googleAccessToken = localStorage.getItem('googleAccessToken');
             const expiresAt = localStorage.getItem('googleTokenExpiresAt');
             
-            // Verifica se il token è scaduto
+            // Verifica se il token è scaduto e prova a refresharlo
             if (googleAccessToken && expiresAt) {
                 const now = Date.now();
                 const expirationTime = parseInt(expiresAt);
                 
-                if (now >= expirationTime) {
-                    // Token scaduto, rimuovilo
-                    console.warn('Token Google scaduto, richiesta nuova autenticazione');
-                    googleAccessToken = null;
-                    localStorage.removeItem('googleAccessToken');
-                    localStorage.removeItem('googleTokenExpiresAt');
-                    localStorage.removeItem('googleRefreshToken');
+                // Se il token è scaduto o sta per scadere (entro 5 minuti), prova a refresharlo
+                if (now >= (expirationTime - 5 * 60 * 1000)) {
+                    const refreshToken = localStorage.getItem('googleRefreshToken');
+                    if (refreshToken) {
+                        // Prova a refreshare il token in modo sincrono (senza await perché siamo in fase di inizializzazione)
+                        fetch('/api/auth?action=refresh', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json'
+                            },
+                            body: JSON.stringify({ refresh_token: refreshToken })
+                        })
+                        .then(refreshResponse => {
+                            if (refreshResponse.ok) {
+                                return refreshResponse.json();
+                            }
+                            throw new Error('Refresh failed');
+                        })
+                        .then(tokenData => {
+                            googleAccessToken = tokenData.access_token;
+                            const newExpiresAt = Date.now() + (tokenData.expires_in * 1000);
+                            
+                            localStorage.setItem('googleAccessToken', googleAccessToken);
+                            localStorage.setItem('googleTokenExpiresAt', newExpiresAt.toString());
+                            
+                            console.log('Token Google refreshato all\'avvio');
+                            updateAuthStatus();
+                        })
+                        .catch(error => {
+                            console.warn('Impossibile refreshare il token Google all\'avvio:', error);
+                            googleAccessToken = null;
+                            localStorage.removeItem('googleAccessToken');
+                            localStorage.removeItem('googleTokenExpiresAt');
+                            localStorage.removeItem('googleRefreshToken');
+                            updateAuthStatus();
+                        });
+                    } else {
+                        // Nessun refresh token disponibile, rimuovi access token
+                        console.warn('Token Google scaduto e nessun refresh token disponibile');
+                        googleAccessToken = null;
+                        localStorage.removeItem('googleAccessToken');
+                        localStorage.removeItem('googleTokenExpiresAt');
+                    }
                 }
             }
         }
@@ -981,10 +1017,93 @@ Lo sviluppo responsabile dell'AI richiede attenzione a:
             }
         }
 
+        // Funzione helper per refreshare il token se necessario
+        async function refreshTokenIfNeeded() {
+            const expiresAt = localStorage.getItem('googleTokenExpiresAt');
+            if (!expiresAt) return false;
+            
+            const now = Date.now();
+            const expirationTime = parseInt(expiresAt);
+            
+            // Se il token è scaduto o sta per scadere (entro 5 minuti), refreshalo
+            if (now >= (expirationTime - 5 * 60 * 1000)) {
+                const refreshToken = localStorage.getItem('googleRefreshToken');
+                if (!refreshToken) return false;
+                
+                try {
+                    const refreshResponse = await fetch('/api/auth?action=refresh', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({ refresh_token: refreshToken })
+                    });
+                    
+                    if (refreshResponse.ok) {
+                        const tokenData = await refreshResponse.json();
+                        googleAccessToken = tokenData.access_token;
+                        const newExpiresAt = Date.now() + (tokenData.expires_in * 1000);
+                        
+                        localStorage.setItem('googleAccessToken', googleAccessToken);
+                        localStorage.setItem('googleTokenExpiresAt', newExpiresAt.toString());
+                        
+                        console.log('Token Google refreshato automaticamente');
+                        return true;
+                    }
+                } catch (error) {
+                    console.error('Errore durante refresh token:', error);
+                }
+            }
+            return false;
+        }
+
+        // Funzione helper per refreshare il token se necessario
+        async function refreshTokenIfNeeded() {
+            const expiresAt = localStorage.getItem('googleTokenExpiresAt');
+            if (!expiresAt || !googleAccessToken) return false;
+            
+            const now = Date.now();
+            const expirationTime = parseInt(expiresAt);
+            
+            // Se il token è scaduto o sta per scadere (entro 5 minuti), refreshalo
+            if (now >= (expirationTime - 5 * 60 * 1000)) {
+                const refreshToken = localStorage.getItem('googleRefreshToken');
+                if (!refreshToken) return false;
+                
+                try {
+                    const refreshResponse = await fetch('/api/auth?action=refresh', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({ refresh_token: refreshToken })
+                    });
+                    
+                    if (refreshResponse.ok) {
+                        const tokenData = await refreshResponse.json();
+                        googleAccessToken = tokenData.access_token;
+                        const newExpiresAt = Date.now() + (tokenData.expires_in * 1000);
+                        
+                        localStorage.setItem('googleAccessToken', googleAccessToken);
+                        localStorage.setItem('googleTokenExpiresAt', newExpiresAt.toString());
+                        
+                        console.log('Token Google refreshato automaticamente');
+                        return true;
+                    }
+                } catch (error) {
+                    console.error('Errore durante refresh token:', error);
+                }
+            }
+            return false;
+        }
+
         async function saveToGoogleDrive(content, title, category) {
             if (!googleAccessToken) {
                 throw new Error('Autenticazione Google richiesta. Esegui il login.');
             }
+
+            // Prova a refreshare il token se necessario
+            await refreshTokenIfNeeded();
 
             try {
                 const response = await fetch('/api/drive', {
@@ -1009,7 +1128,31 @@ Lo sviluppo responsabile dell'AI richiede attenzione a:
                         errorMessage.includes('invalid authentication credentials') ||
                         errorMessage.includes('Invalid Credentials') ||
                         errorMessage.includes('unauthorized')) {
-                        // Token scaduto o non valido
+                        // Prova a refreshare il token una volta
+                        const refreshed = await refreshTokenIfNeeded();
+                        
+                        if (refreshed) {
+                            // Riprova la richiesta con il nuovo token
+                            const retryResponse = await fetch('/api/drive', {
+                                method: 'POST',
+                                headers: {
+                                    'Content-Type': 'application/json'
+                                },
+                                body: JSON.stringify({
+                                    content,
+                                    title,
+                                    category,
+                                    accessToken: googleAccessToken
+                                })
+                            });
+                            
+                            if (retryResponse.ok) {
+                                const data = await retryResponse.json();
+                                return data;
+                            }
+                        }
+                        
+                        // Refresh fallito o retry fallito, richiedi nuovo login
                         console.warn('Token Google scaduto o non valido, richiesta nuova autenticazione');
                         googleAccessToken = null;
                         localStorage.removeItem('googleAccessToken');
@@ -1040,6 +1183,9 @@ Lo sviluppo responsabile dell'AI richiede attenzione a:
                 console.warn('Token Google non disponibile, email non inviata');
                 return { success: false };
             }
+
+            // Prova a refreshare il token se necessario
+            await refreshTokenIfNeeded();
 
             try {
                 const response = await fetch('/api/gmail', {
@@ -1092,6 +1238,9 @@ Lo sviluppo responsabile dell'AI richiede attenzione a:
                 console.warn('Token Google non disponibile, sheet non aggiornato');
                 return { success: false };
             }
+
+            // Prova a refreshare il token se necessario
+            await refreshTokenIfNeeded();
 
             try {
                 const response = await fetch('/api/sheets', {
