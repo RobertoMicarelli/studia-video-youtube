@@ -4,10 +4,15 @@
  * Supporta video fino a 4 ore (240 minuti)
  * 
  * MODELLI CONSIGLIATI:
- * - gpt-4o: Migliore qualità, contenuti più dettagliati e approfonditi (consigliato per dispense professionali)
+ * - gpt-4o: Migliore qualità, contenuti più dettagliati e approfonditi (default, consigliato)
+ * - gpt-4o-2024-08-06: Versione specifica di GPT-4o (se disponibile)
  * - gpt-4o-mini: Più economico, qualità buona ma contenuti meno dettagliati
  * 
- * Configura OPENAI_MODEL in Vercel per cambiare modello (default: gpt-4o-mini)
+ * COSTI APPROSSIMATIVI (per 1M token):
+ * - gpt-4o: Input $2.50, Output $10.00
+ * - gpt-4o-mini: Input $0.15, Output $0.60
+ * 
+ * Configura OPENAI_MODEL in Vercel per cambiare modello (default: gpt-4o)
  */
 
 export default async function handler(req, res) {
@@ -65,9 +70,10 @@ export default async function handler(req, res) {
             content: prompt
           }
         ],
-        // Per video lunghi (fino a 4 ore), usiamo 12000 token per output
-        // Questo permette dispense dettagliate e approfondite anche per contenuti molto lunghi
-        max_tokens: parseInt(process.env.OPENAI_MAX_TOKENS || '12000'),
+        // Per video lunghi (fino a 4 ore), usiamo 16000 token per output
+        // Questo permette dispense molto dettagliate e approfondite anche per contenuti molto lunghi
+        // Aumentato per contenuti più completi e professionali
+        max_tokens: parseInt(process.env.OPENAI_MAX_TOKENS || '16000'),
         temperature: parseFloat(process.env.OPENAI_TEMPERATURE || '0.7')
       })
     });
