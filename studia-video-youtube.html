@@ -752,9 +752,16 @@ TRASCRIZIONE:
             console.log('Titolo:', titoloFinale);
             console.log('URL:', videoUrl);
             console.log('Temi:', temiFinali);
+            console.log('Categoria:', category);
             console.log('===========================');
             
-            const prompt = PROMPT_TEMPLATE
+            // Seleziona il prompt in base alla categoria
+            const isIntervista = category && (category.toUpperCase().includes('INTERVIST') || category.toUpperCase() === 'INTERVISTE');
+            const selectedPrompt = isIntervista ? PROMPT_INTERVISTE_TEMPLATE : PROMPT_TEMPLATE;
+            
+            console.log('Prompt selezionato:', isIntervista ? 'INTERVISTE' : 'STANDARD');
+            
+            const prompt = selectedPrompt
                 .replace('{{VIDEO_URL}}', videoUrl)
                 .replace('{{TEMI_TRATTATI}}', temiFinali)
                 .replace('{{AUTORE}}', autoreFinale)
