@@ -660,12 +660,25 @@ TRASCRIZIONE:
             const autoreFinale = author || 'Non disponibile';
             const titoloFinale = videoTitle || 'Non disponibile';
             
+            console.log('=== METADATI PER PROMPT ===');
+            console.log('Autore:', autoreFinale);
+            console.log('Titolo:', titoloFinale);
+            console.log('URL:', videoUrl);
+            console.log('Temi:', temiFinali);
+            console.log('===========================');
+            
             const prompt = PROMPT_TEMPLATE
                 .replace('{{VIDEO_URL}}', videoUrl)
                 .replace('{{TEMI_TRATTATI}}', temiFinali)
                 .replace('{{AUTORE}}', autoreFinale)
                 .replace('{{TITOLO}}', titoloFinale)
                 .replace('{{TRANSCRIPT}}', transcript);
+            
+            // Debug: verifica che i placeholder siano stati sostituiti
+            if (prompt.includes('{{AUTORE}}') || prompt.includes('{{TITOLO}}')) {
+                console.warn('⚠️ ATTENZIONE: Alcuni placeholder non sono stati sostituiti!');
+                console.log('Prompt preview (primi 500 caratteri):', prompt.substring(0, 500));
+            }
 
             try {
                 const response = await fetch('/api/openai', {
