@@ -40,11 +40,45 @@ export default async function handler(req, res) {
     });
     console.log('=== FINE LOG GOOGLE SHEETS API ===');
 
-    // Aggiungi riga al foglio
-    const response = await fetch(
-      `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}/values/A1:append?valueInputOption=RAW`,
+    // Trova la prima riga vuota
+    // Leggi le righe esistenti per trovare la prima vuota
+    const readResponse = await fetch(
+      `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}/values/A:A?majorDimension=COLUMNS`,
       {
-        method: 'POST',
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${accessToken}`
+        }
+      }
+    );
+
+    let nextRow = 2; // Default: seconda riga (dopo intestazione)
+    
+    if (readResponse.ok) {
+      const readData = await readResponse.json();
+      const rows = readData.values && readData.values[0] ? readData.values[0] : [];
+      
+      // Trova la prima riga vuota (dopo l'intestazione)
+      // L'intestazione è nella riga 1, quindi iniziamo dalla riga 2
+      for (let i = 1; i < rows.length; i++) {
+        if (!rows[i] || rows[i].trim() === '') {
+          nextRow = i + 1; // +1 perché le righe partono da 1
+          break;
+        }
+      }
+      
+      // Se tutte le righe sono piene, usa la riga successiva
+      if (nextRow === 2 && rows.length > 1) {
+        nextRow = rows.length + 1;
+      }
+    }
+
+    // Aggiungi riga alla posizione trovata
+    const range = `A${nextRow}:F${nextRow}`;
+    const response = await fetch(
+      `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}/values/${range}?valueInputOption=RAW`,
+      {
+        method: 'PUT',
         headers: {
           'Authorization': `Bearer ${accessToken}`,
           'Content-Type': 'application/json'

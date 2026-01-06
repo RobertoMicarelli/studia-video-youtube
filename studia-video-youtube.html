@@ -246,6 +246,46 @@
                         In attesa di elaborazione...
                     </p>
                 </div>
+
+                <!-- Category Selection (hidden by default) -->
+                <div id="categorySelection" class="hidden mt-6 p-6 bg-white border border-gray-200 rounded-xl shadow-sm">
+                    <h3 class="text-lg font-bold text-gray-800 mb-4">📁 Seleziona la cartella di destinazione</h3>
+                    <div class="mb-4">
+                        <label for="categorySelect" class="block text-sm font-medium text-gray-700 mb-2">
+                            Cartella:
+                        </label>
+                        <select 
+                            id="categorySelect" 
+                            class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent text-gray-800 font-medium"
+                        >
+                            <option value="STUDIO AI">STUDIO AI</option>
+                            <option value="FORMAZIONE" selected>FORMAZIONE</option>
+                            <option value="APPLICAZIONI">APPLICAZIONI</option>
+                            <option value="FILOSOFIA">FILOSOFIA</option>
+                            <option value="COACHING">COACHING</option>
+                            <option value="VARIE">VARIE</option>
+                        </select>
+                    </div>
+                    <div class="mb-4">
+                        <label for="categoryCustom" class="block text-sm font-medium text-gray-700 mb-2">
+                            Oppure inserisci un nome personalizzato (tutto in MAIUSCOLE):
+                        </label>
+                        <input 
+                            type="text" 
+                            id="categoryCustom" 
+                            placeholder="es. TECNOLOGIA"
+                            class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent text-gray-800 uppercase"
+                            oninput="this.value = this.value.toUpperCase()"
+                        />
+                    </div>
+                    <button 
+                        id="confirmCategoryBtn"
+                        onclick="confirmCategoryAndSave()"
+                        class="w-full bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white px-6 py-3 rounded-lg font-semibold transition-all shadow-lg hover:shadow-xl"
+                    >
+                        💾 Conferma e Salva
+                    </button>
+                </div>
             </div>
 
             <!-- Result Section -->
@@ -1203,160 +1243,30 @@ Lo sviluppo responsabile dell'AI richiede attenzione a:
                 updateProgress(65, 2, '✅ Dispensa generata con successo!');
                 await new Promise(resolve => setTimeout(resolve, 800));
 
-                // Estrai temi dall'abstract
+                // Estrai temi dall'abstract per suggerire categoria
                 const themesMatch = dispensa.match(/\*\*Temi Trattati:\*\* (.+)/);
                 const themes = themesMatch ? themesMatch[1] : '';
-                const category = selectCategory(themes);
-
-                // Step 3: Salvataggio su Google Drive
-                updateProgress(70, 3, '💾 Creazione documento Google Docs...');
-                await new Promise(resolve => setTimeout(resolve, 500));
+                const suggestedCategory = selectCategory(themes);
                 
-                updateProgress(75, 3, `💾 Salvataggio nella cartella "${category}"...`);
+                // Imposta la categoria suggerita nel menu
+                document.getElementById('categorySelect').value = suggestedCategory;
                 
-                // Verifica autenticazione prima di salvare
-                if (!googleAccessToken) {
-                    throw new Error('Autenticazione Google richiesta. Clicca su "Accedi con Google" prima di generare la dispensa.');
-                }
+                // Mostra il menu di selezione categoria
+                document.getElementById('categorySelection').classList.remove('hidden');
+                updateProgress(70, 3, '📁 Seleziona la cartella di destinazione...');
                 
-                const driveResult = await saveToGoogleDrive(dispensa, videoData.title, category);
-                currentVideoData.driveResult = driveResult;
-
-                updateProgress(85, 3, '✅ Documento salvato su Google Drive!');
-                await new Promise(resolve => setTimeout(resolve, 800));
-
-                // Step 4: Invio email e aggiornamento sheet
-                updateProgress(88, 4, '📧 Preparazione email di notifica...');
-                
-                // Estrai abstract con regex più robusta e flessibile
-                // Il nuovo prompt genera ABSTRACT come sezione separata
-                let abstract = 'Dispensa didattica generata da video YouTube';
-                
-                console.log('=== DEBUG ESTRAZIONE ABSTRACT ===');
-                console.log('Lunghezza dispensa:', dispensa.length);
-                console.log('Preview dispensa (primi 1000 caratteri):', dispensa.substring(0, 1000));
-                
-                // Prova diversi pattern per trovare l'abstract
-                // Pattern più flessibili che gestiscono vari formati del nuovo prompt
-                const patterns = [
-                    // Pattern principale: ABSTRACT seguito da testo fino a CORPO DELLA DISPENSA
-                    /ABSTRACT\s*\n\n(.+?)(?=\n\nCORPO DELLA DISPENSA|$)/is,
-                    // Pattern con ## ABSTRACT
-                    /##\s*ABSTRACT\s*\n\n(.+?)(?=\n\n##\s*CORPO|$)/is,
-                    // Pattern con 2. ABSTRACT
-                    /(?:##\s*)?2\.\s*ABSTRACT\s*\n\n(.+?)(?=\n\n(?:##\s*)?(?:3\.|CORPO)|$)/is,
-                    // Pattern senza numerazione
-                    /(?:##\s*)?ABSTRACT\s*\n\n(.+?)(?=\n\n(?:##\s*)?(?:CORPO|#)|$)/is,
-                    // Pattern con solo "ABSTRACT" come titolo
-                    /^ABSTRACT\s*\n\n(.+?)(?=\n\n(?:##\s*)?(?:CORPO|#)|$)/ims,
-                    // Pattern che cerca qualsiasi sezione "ABSTRACT" seguita da testo
-                    /ABSTRACT[:\s]*\n\n(.+?)(?=\n\n(?:##\s*)?(?:CORPO|METADATI|#)|$)/is
-                ];
-                
-                for (let i = 0; i < patterns.length; i++) {
-                    const pattern = patterns[i];
-                    const match = dispensa.match(pattern);
-                    
-                    if (match && match[1]) {
-                        let extractedAbstract = match[1]
-                            .trim()
-                            .replace(/\*\*/g, '') // Rimuovi **
-                            .replace(/\*/g, '') // Rimuovi * (ma non quelli in elenchi)
-                            .replace(/#/g, '') // Rimuovi #
-                            .replace(/^\s*[-*•]\s+/gm, '') // Rimuovi elenchi puntati all'inizio riga
-                            .replace(/\n+/g, ' ') // Sostituisci newline con spazio
-                            .replace(/\s+/g, ' ') // Normalizza spazi multipli
-                            .trim();
-                        
-                        console.log(`Pattern ${i + 1} trovato! Lunghezza abstract estratto:`, extractedAbstract.length);
-                        console.log('Abstract estratto (primi 200 caratteri):', extractedAbstract.substring(0, 200));
-                        
-                        // Verifica che non sia vuoto o troppo corto (almeno 50 caratteri per essere valido)
-                        if (extractedAbstract.length > 50) {
-                            abstract = extractedAbstract.substring(0, 1000); // Limita a 1000 caratteri
-                            console.log('✅ Abstract estratto con successo!');
-                            console.log('Abstract completo:', abstract);
-                            break;
-                        } else {
-                            console.warn(`Pattern ${i + 1} trovato ma abstract troppo corto (${extractedAbstract.length} caratteri)`);
-                        }
-                    } else {
-                        console.log(`Pattern ${i + 1} non ha trovato match`);
-                    }
-                }
-                
-                // Se non trovato, prova a cercare qualsiasi testo tra "ABSTRACT" e "3." o "CORPO"
-                if (abstract === 'Dispensa didattica generata da video YouTube' || abstract.length < 50) {
-                    console.warn('⚠️ Abstract non trovato con i pattern standard, provo ricerca alternativa...');
-                    
-                    // Cerca la posizione di "ABSTRACT" e "3." o "CORPO"
-                    const abstractIndex = dispensa.search(/(?:##\s*)?2\.\s*ABSTRACT|ABSTRACT/i);
-                    const nextSectionIndex = dispensa.search(/(?:##\s*)?3\.|##\s*CORPO/i);
-                    
-                    if (abstractIndex !== -1 && nextSectionIndex !== -1 && nextSectionIndex > abstractIndex) {
-                        let alternativeAbstract = dispensa.substring(abstractIndex, nextSectionIndex)
-                            .replace(/(?:##\s*)?2\.\s*ABSTRACT|ABSTRACT/gi, '')
-                            .trim()
-                            .replace(/\*\*/g, '')
-                            .replace(/\*/g, '')
-                            .replace(/#/g, '')
-                            .replace(/^\s*[-*•]\s+/gm, '')
-                            .replace(/\n+/g, ' ')
-                            .replace(/\s+/g, ' ')
-                            .trim();
-                        
-                        if (alternativeAbstract.length > 50) {
-                            abstract = alternativeAbstract.substring(0, 1000);
-                            console.log('✅ Abstract estratto con metodo alternativo!');
-                            console.log('Abstract:', abstract);
-                        }
-                    }
-                }
-                
-                // Se ancora non trovato, usa fallback
-                if (abstract === 'Dispensa didattica generata da video YouTube' || abstract.length < 50) {
-                    console.error('❌ Abstract non trovato nella dispensa, uso fallback');
-                    console.log('Dispensa completa (primi 2000 caratteri):', dispensa.substring(0, 2000));
-                } else {
-                    console.log('✅ Abstract finale da salvare:', abstract);
-                }
-                console.log('=== FINE DEBUG ESTRAZIONE ABSTRACT ===');
-                
-                await sendEmail(driveResult.docUrl, url, abstract, videoData.title);
-                
-                updateProgress(93, 4, '✅ Email inviata!');
-                await new Promise(resolve => setTimeout(resolve, 500));
-                
-                updateProgress(96, 4, '📊 Aggiornamento registro Google Sheets...');
-                
-                // Debug: verifica che l'abstract sia stato estratto
-                console.log('=== PREPARAZIONE DATI PER GOOGLE SHEETS ===');
-                console.log('Abstract da salvare (lunghezza:', abstract.length, 'caratteri):');
-                console.log(abstract);
-                console.log('Abstract preview (primi 200 caratteri):', abstract.substring(0, 200));
-                
-                // Verifica che l'abstract non sia il fallback
-                if (abstract === 'Dispensa didattica generata da video YouTube' || abstract.length < 50) {
-                    console.error('⚠️ ATTENZIONE: Abstract non valido, verrà usato il fallback!');
-                    console.error('Abstract attuale:', abstract);
-                }
-                
-                await updateGoogleSheet({
-                    timestamp: new Date().toISOString(),
-                    title: videoData.title,
+                // Salva i dati temporanei per il salvataggio successivo
+                currentVideoData.pendingSave = {
+                    dispensa: dispensa,
+                    videoData: videoData,
                     url: url,
-                    docUrl: driveResult.docUrl,
-                    category: category,
-                    abstract: abstract // Assicurati che questo sia passato correttamente
-                });
+                    themes: themes
+                };
                 
-                console.log('✅ Dati inviati a Google Sheets');
+                // Attendi che l'utente selezioni la categoria (la funzione confirmCategoryAndSave continuerà)
+                return; // Esci dalla funzione, il salvataggio continuerà quando l'utente conferma
 
-                updateProgress(100, 4, '✅ Processo completato!');
-                await new Promise(resolve => setTimeout(resolve, 1000));
-
-                // Mostra risultati
-                showResults(videoData.title, driveResult.docUrl, category, abstract);
+                // Questo codice è stato spostato nella funzione confirmCategoryAndSave()
 
             } catch (error) {
                 console.error('Errore durante l\'elaborazione:', error);
