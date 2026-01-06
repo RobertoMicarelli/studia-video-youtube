@@ -404,59 +404,76 @@
             }
         }
 
-        // Prompt per OpenAI (modificato e ottimizzato)
-        const PROMPT_TEMPLATE = `Trasforma la seguente trascrizione di un video YouTube in una dispensa didattica professionale, strutturata per l'apprendimento e la consultazione rapida.
+        // Prompt per OpenAI (ottimizzato per qualità professionale)
+        const PROMPT_TEMPLATE = `Sei un esperto nella creazione di dispense didattiche professionali da trascrizioni video. Il tuo compito è trasformare la seguente trascrizione in una dispensa didattica di alta qualità, ben strutturata e professionale.
 
-STRUTTURA RICHIESTA
+STRUTTURA OBBLIGATORIA
 
 1. METADATI DEL VIDEO
-**Autore:** [Nome del canale/creatore]
-**Titolo:** [Titolo del video]
+**Autore:** [Nome del canale/creatore esatto dal video]
+**Titolo:** [Titolo esatto del video]
 **URL YouTube:** {{VIDEO_URL}}
-**Temi Trattati:** #tema1 #tema2 #tema3 #tema4 #tema5
+**Temi Trattati:** [Estrai 3-5 hashtag tematici rilevanti dal contenuto, es: #IntelligenzaArtificiale #Filosofia #Tecnologia]
 **Data di elaborazione:** ${new Date().toLocaleDateString('it-IT')}
 
 2. ABSTRACT
-Scrivi un abstract dettagliato e professionale (4-6 righe) che sintetizzi in modo completo:
-* L'argomento principale del video e il contesto in cui si inserisce
-* Gli obiettivi formativi e l'approccio metodologico utilizzato
-* I punti chiave e i concetti fondamentali che verranno trattati
-* Il target di riferimento (professionisti, studenti, formatori, manager, ecc.)
-* L'importanza e la rilevanza del contenuto per il pubblico
+Scrivi un abstract professionale e dettagliato (5-7 righe, minimo 200 parole) che:
+- Introduca l'argomento principale del video con contesto e background
+- Descriva il progetto, l'iniziativa o il tema centrale se presente
+- Spieghi l'approccio metodologico, interdisciplinare o formativo utilizzato
+- Indichi gli obiettivi formativi e i punti chiave che verranno trattati
+- Specifichi chiaramente il target di riferimento (professionisti, formatori, manager, studenti, ecc.)
+- Evidenzi l'importanza e la rilevanza del contenuto per il pubblico
 
-L'abstract deve essere scritto in un unico paragrafo fluido e coerente, senza elenchi puntati o formattazione markdown. Deve essere informativo e completo, permettendo al lettore di comprendere immediatamente il valore e il contenuto del video.
+L'abstract deve essere scritto in un unico paragrafo fluido, coerente e professionale, SENZA elenchi puntati, senza formattazione markdown (nessun **, *, #), e senza interruzioni. Deve essere informativo, completo e permettere al lettore di comprendere immediatamente il valore, il contesto e il contenuto del video.
+
+ESEMPIO DI STILE ABSTRACT:
+"Il video introduce [progetto/tema] come [tipo di iniziativa] volto a [obiettivo principale]. Attraverso un approccio [metodologico] che unisce [discipline/approcci], [descrizione dettagliata del contenuto]. Gli obiettivi formativi includono [obiettivi specifici]. I punti chiave trattati comprendono [concetti principali]. Il contenuto è rivolto a [target specifico] e a chiunque [interesse/necessità]."
 
 3. CORPO DELLA DISPENSA
 FORMATTAZIONE RICHIESTA:
-* Suddividi il contenuto in sezioni tematiche chiare
+* Suddividi il contenuto in sezioni tematiche chiare e logiche
 * Usa SOLO simboli markdown per i titoli:
-  - ## per titoli principali (H1)
+  - ## per titoli principali di sezione (H1)
   - ### per sottotitoli (H2)
   - #### per sottotitoli terziari (H3)
-* IMPORTANTE: NON scrivere mai "H1:", "H2:", "H3:" o "H1:" nel testo
+* IMPORTANTE: NON scrivere mai "H1:", "H2:", "H3:" o simili nel testo
 * Scrivi direttamente: ## Titolo oppure ### Sottotitolo
 * Evidenzia i concetti chiave in grassetto con **testo**
 * Crea elenchi puntati per informazioni strutturate con - o *
 * Mantieni paragrafi di lunghezza media (3-5 righe)
+* Usa transizioni fluide tra le sezioni
 
-CRITERI DI ELABORAZIONE:
-1. Elimina ripetizioni, esitazioni, e contenuti non rilevanti
-2. Ignora completamente parti promozionali o pubblicitarie
-3. Riorganizza il contenuto in ordine logico-didattico
-4. Arricchisci con strutture testuali che facilitino la comprensione
-5. Mantieni tutti i concetti e le informazioni tecniche importanti
-6. Aggiungi collegamenti logici tra le sezioni quando necessario
+CRITERI DI ELABORAZIONE RIGOROSI:
+1. Analizza attentamente la trascrizione per comprendere il contesto completo
+2. Elimina completamente: ripetizioni, esitazioni ("eh", "mmm", "allora"), interiezioni, contenuti non rilevanti
+3. Ignora totalmente: parti promozionali, pubblicitarie, inviti a iscriversi, ringraziamenti generici
+4. Riorganizza il contenuto in ordine logico-didattico, creando una narrazione coerente
+5. Arricchisci con strutture testuali che facilitino la comprensione (introduzioni alle sezioni, collegamenti logici)
+6. Mantieni TUTTI i concetti, le informazioni tecniche, le citazioni e i riferimenti importanti
+7. Aggiungi collegamenti logici tra le sezioni per creare un flusso narrativo
+8. Preserva la terminologia tecnica originale quando appropriata
+9. Sviluppa i concetti in modo approfondito, non solo sintetico
+10. Crea una struttura gerarchica chiara che faciliti la consultazione
+
+QUALITÀ RICHIESTA:
+- Contenuto approfondito e dettagliato, non superficiale
+- Linguaggio professionale ma accessibile
+- Struttura logica e ben organizzata
+- Completezza informativa
+- Coerenza narrativa tra le sezioni
 
 4. SEZIONE FINALE
-* Punti chiave da ricordare: (3-5 bullet points)
-* Approfondimenti suggeriti: (se menzionati nel video)
-* Applicazioni pratiche: (se presenti)
+* Punti chiave da ricordare: (4-6 bullet points che sintetizzano i concetti fondamentali)
+* Approfondimenti suggeriti: (se menzionati nel video o logicamente collegati)
+* Applicazioni pratiche: (se presenti o deducibili dal contenuto)
 
 TONE OF VOICE
-* Professionale ma accessibile
-* Chiaro e diretto
-* Orientato all'apprendimento
+* Professionale e autorevole
+* Chiaro, diretto e accessibile
+* Orientato all'apprendimento e alla comprensione
 * Mantenere terminologia tecnica quando appropriata
+* Evitare toni troppo informali o colloquiali
 
 TRASCRIZIONE:
 {{TRANSCRIPT}}`;
