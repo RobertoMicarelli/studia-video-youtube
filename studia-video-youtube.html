@@ -1594,8 +1594,77 @@ Lo sviluppo responsabile dell'AI richiede attenzione a:
             }
         }
 
+        // Funzione per caricare le cartelle esistenti da Google Drive
+        async function loadExistingFolders() {
+            const token = localStorage.getItem('googleAccessToken');
+            if (!token) {
+                console.log('Token non disponibile, uso categorie predefinite');
+                return;
+            }
+            
+            try {
+                // Verifica se il token è scaduto
+                await refreshTokenIfNeeded();
+                const currentToken = localStorage.getItem('googleAccessToken');
+                
+                const response = await fetch(`/api/folders?accessToken=${encodeURIComponent(currentToken)}`);
+                if (!response.ok) {
+                    console.warn('Errore recupero cartelle, uso categorie predefinite');
+                    return;
+                }
+                
+                const data = await response.json();
+                if (data.success && data.folders && data.folders.length > 0) {
+                    const categorySelect = document.getElementById('categorySelect');
+                    const existingOptions = Array.from(categorySelect.options).map(opt => opt.value);
+                    
+                    // Aggiungi le cartelle esistenti che non sono già nel dropdown
+                    data.folders.forEach(folderName => {
+                        if (!existingOptions.includes(folderName)) {
+                            const option = document.createElement('option');
+                            option.value = folderName;
+                            option.textContent = folderName;
+                            categorySelect.appendChild(option);
+                        }
+                    });
+                    
+                    // Ordina le opzioni alfabeticamente (mantenendo le predefinite in cima)
+                    const predefined = ['STUDIO AI', 'FORMAZIONE', 'INTERVISTE', 'APPLICAZIONI', 'FILOSOFIA', 'COACHING', 'VARIE'];
+                    const options = Array.from(categorySelect.options);
+                    const predefinedOptions = options.filter(opt => predefined.includes(opt.value));
+                    const customOptions = options.filter(opt => !predefined.includes(opt.value));
+                    
+                    // Ordina le custom alfabeticamente
+                    customOptions.sort((a, b) => a.value.localeCompare(b.value));
+                    
+                    // Svuota e riaggiungi in ordine
+                    categorySelect.innerHTML = '';
+                    predefinedOptions.forEach(opt => categorySelect.appendChild(opt));
+                    customOptions.forEach(opt => categorySelect.appendChild(opt));
+                    
+                    console.log('✅ Cartelle caricate:', data.folders.length);
+                }
+            } catch (error) {
+                console.error('Errore caricamento cartelle:', error);
+            }
+        }
+        
         // Inizializza stato autenticazione all'avvio
         updateAuthStatus();
+        
+        // Carica le cartelle quando l'utente è autenticato
+        if (localStorage.getItem('googleAccessToken')) {
+            loadExistingFolders();
+        }
+        
+        // Ricarica le cartelle dopo l'autenticazione (override della funzione)
+        const originalUpdateAuthStatus = window.updateAuthStatus || updateAuthStatus;
+        window.updateAuthStatus = function() {
+            originalUpdateAuthStatus();
+            if (localStorage.getItem('googleAccessToken')) {
+                loadExistingFolders();
+            }
+        };
 
         async function startProcessing() {
             const urlInput = document.getElementById('youtubeUrl');
