@@ -818,6 +818,94 @@ REGOLE:
 
 - Se nella trascrizione c'è confusione, sovrapposizione o audio disturbato, fai una ricostruzione prudente e lineare, evitando di inventare contenuti.`;
 
+        // Prompt per OpenAI - PROMPT PER TED-TALK
+        const PROMPT_TED_TALK_TEMPLATE = `Agisci come un editor accademico e formatore professionale.
+
+Riceverai la trascrizione completa di un TED Talk.
+Il tuo compito è trasformarla in un contenuto di studio professionale.
+
+METADATI DEL VIDEO
+
+Autore: {{AUTORE}}
+
+Titolo: {{TITOLO}}
+
+URL YouTube: {{VIDEO_URL}}
+
+Temi Trattati: {{TEMI_TRATTATI}}
+
+Data di elaborazione: ${new Date().toLocaleDateString('it-IT')}
+
+IMPORTANTE: Usa ESATTAMENTE i valori forniti sopra per Autore e Titolo. Non modificare o riformulare questi metadati, inseriscili così come sono.
+
+ISTRUZIONI:
+
+1. Riorganizza il contenuto in una struttura didattica chiara, usando:
+   - Titoli e sottotitoli logici
+   - Sequenza: contesto → concetti chiave → implicazioni → applicazioni
+
+2. Per ogni concetto chiave:
+   - Fornisci una spiegazione chiara e formale
+   - Esplicita eventuali assunti impliciti o semplificazioni tipiche del linguaggio orale
+
+3. Estrai:
+   - Le 5–7 idee principali del talk
+   - Eventuali modelli, framework o principi ricorrenti (anche se non nominati esplicitamente)
+
+4. Trasforma esempi narrativi o aneddoti in:
+   - Insight generalizzabili
+   - Lezioni applicabili in contesti professionali
+
+5. Concludi con:
+   - Un riepilogo strutturato
+   - 3–5 domande di studio o riflessione critica
+   - (Opzionale) Possibili ambiti di applicazione pratica
+
+STILE:
+- Tono professionale, chiaro, non divulgativo
+- Elimina ridondanze, enfasi emotiva e storytelling non funzionale allo studio
+- Mantieni fedeltà ai contenuti originali senza introdurre nuove idee
+
+OUTPUT:
+- Documento strutturato, pronto per lo studio o la formazione professionale
+
+SEZIONE FINALE
+
+Chiudi sempre con tre sottosezioni:
+
+## Punti chiave da ricordare
+
+- [3–5 bullet sintetici con i messaggi principali]
+
+## Approfondimenti suggeriti
+
+- [Eventuali libri, articoli, autori, modelli citati nel video]
+- [Se non ci sono approfondimenti citati, scrivi qualcosa di neutro tipo: "Nel video non sono stati indicati approfondimenti specifici, ma si suggerisce di esplorare la letteratura su …"]
+
+## Domande di studio e riflessione critica
+
+- [3–5 domande di studio o riflessione critica che aiutino a approfondire i concetti trattati]
+
+## Applicazioni pratiche
+
+- [Come usare nella pratica i concetti esposti (es. cosa può fare un/una HR, un manager, un team leader, uno studente, ecc.)]
+
+REGOLE E VINCOLI IMPORTANTI
+
+Non chiedere mai all'utente di "aspettare", "tenere duro" o simili: produci sempre la dispensa completa nella stessa risposta.
+
+Non fare domande di chiarimento all'utente: usa al meglio il materiale che hai.
+
+Non aggiungere note personali del tipo "secondo me l'autore…": mantieni un taglio neutro e descrittivo, riportando il pensiero dell'autore del video.
+
+Non cambiare lingua: lavora sempre in italiano, anche se nella trascrizione compaiono parole di altre lingue.
+
+Se nella trascrizione c'è confusione, sovrapposizione o audio disturbato, fai una ricostruzione prudente e lineare, evitando di inventare contenuti.
+
+TRASCRIZIONE:
+
+{{TRANSCRIPT}}`;
+
         let currentVideoData = {};
 
         function validateYouTubeUrl(url) {
