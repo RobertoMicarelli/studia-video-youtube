@@ -2109,12 +2109,11 @@ Lo sviluppo responsabile dell'AI richiede attenzione a:
                         }
                     }
                 } else if (isTutorial) {
-                    // Per TUTORIAL: estrai sezione METADATA
+                    // Per TUTORIAL: estrai sezione METADATA (mantenendo il formato con trattini)
                     console.log('🔍 Estrazione METADATA per TUTORIAL...');
                     const metadataPatterns = [
                         /(?:##\s*)?1\.\s*METADATA\s*\n\n(.+?)(?=\n\n(?:##\s*)?(?:2\.|ABSTRACT|INDICE|CONTENUTO|#)|$)/is,
                         /(?:##\s*)?METADATA\s*\n\n(.+?)(?=\n\n(?:##\s*)?(?:ABSTRACT|INDICE|CONTENUTO|#)|$)/is,
-                        /─────────────────────────────────────────────────────────────────\s*\n1\.\s*METADATA\s*\n─────────────────────────────────────────────────────────────────\s*\n\n(.+?)(?=\n\n─────────────────────────────────────────────────────────────────|$)/is,
                         /METADATA[:\s]*\n\n(.+?)(?=\n\n(?:##\s*)?(?:ABSTRACT|INDICE|CONTENUTO|#)|$)/is
                     ];
                     
@@ -2122,20 +2121,32 @@ Lo sviluppo responsabile dell'AI richiede attenzione a:
                         const pattern = metadataPatterns[i];
                         const match = dispensa.match(pattern);
                         if (match && match[1]) {
+                            // Mantieni il formato con i trattini "-" e le righe separate
                             abstract = match[1]
                                 .trim()
-                                .replace(/\*\*/g, '')
-                                .replace(/\*/g, '')
-                                .replace(/#/g, '')
-                                .replace(/^\s*[-*•]\s+/gm, '')
-                                .replace(/────────────────+/g, '')
-                                .replace(/\n+/g, ' ')
-                                .replace(/\s+/g, ' ')
+                                .replace(/\*\*/g, '') // Rimuovi grassetto
+                                .replace(/#/g, '') // Rimuovi markdown headings
+                                .replace(/^\d+[\)\.]\s*/gm, '') // Rimuovi numerazione all'inizio riga
+                                .replace(/METADATA[:\s]*/gi, '') // Rimuovi titolo sezione
+                                .replace(/────────────────+/g, '') // Rimuovi linee decorative
+                                .replace(/\n{3,}/g, '\n\n') // Normalizza spazi multipli
                                 .trim();
                             
+                            // Mantieni le righe separate ma pulisci eccessi
+                            abstract = abstract
+                                .split('\n')
+                                .map(line => line.trim())
+                                .filter(line => line.length > 0)
+                                .join('\n');
+                            
                             if (abstract.length > 50) {
-                                abstract = abstract.substring(0, 1000);
-                                console.log(`✅ METADATA estratta con pattern ${i + 1}`);
+                                // Limita a 1000 caratteri ma mantieni righe complete
+                                if (abstract.length > 1000) {
+                                    const truncated = abstract.substring(0, 1000);
+                                    const lastNewline = truncated.lastIndexOf('\n');
+                                    abstract = lastNewline > 0 ? truncated.substring(0, lastNewline) : truncated;
+                                }
+                                console.log(`✅ METADATA estratta con pattern ${i + 1} (lunghezza: ${abstract.length})`);
                                 break;
                             }
                         }
@@ -2151,7 +2162,7 @@ Lo sviluppo responsabile dell'AI richiede attenzione a:
                                 const metadataEnd = dispensa.search(/\n\n(?:##\s*)?(?:2\.|ABSTRACT|INDICE|CONTENUTO|#)/, metadataStart);
                                 const endPos = metadataEnd !== -1 && metadataEnd > metadataStart 
                                     ? metadataEnd 
-                                    : Math.min(metadataStart + 1000, dispensa.length);
+                                    : Math.min(metadataStart + 1500, dispensa.length);
                                 
                                 let extractedText = dispensa.substring(metadataStart, endPos)
                                     .trim()
@@ -2159,16 +2170,26 @@ Lo sviluppo responsabile dell'AI richiede attenzione a:
                                     .replace(/^\d+[\)\.]\s*METADATA\s*/gi, '')
                                     .replace(/METADATA[:\s]*/gi, '')
                                     .replace(/\*\*/g, '')
-                                    .replace(/\*/g, '')
                                     .replace(/#/g, '')
                                     .replace(/────────────────+/g, '')
-                                    .replace(/^\s*[-*•]\s+/gm, '')
-                                    .replace(/\n+/g, ' ')
-                                    .replace(/\s+/g, ' ')
+                                    .replace(/\n{3,}/g, '\n\n')
                                     .trim();
                                 
+                                // Mantieni formato con righe separate
+                                extractedText = extractedText
+                                    .split('\n')
+                                    .map(line => line.trim())
+                                    .filter(line => line.length > 0)
+                                    .join('\n');
+                                
                                 if (extractedText.length > 50) {
-                                    abstract = extractedText.substring(0, 1000);
+                                    if (extractedText.length > 1000) {
+                                        const truncated = extractedText.substring(0, 1000);
+                                        const lastNewline = truncated.lastIndexOf('\n');
+                                        abstract = lastNewline > 0 ? truncated.substring(0, lastNewline) : truncated;
+                                    } else {
+                                        abstract = extractedText;
+                                    }
                                     console.log('✅ METADATA estratta come fallback (lunghezza:', abstract.length, ')');
                                 }
                             }
