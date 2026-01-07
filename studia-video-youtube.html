@@ -1677,67 +1677,167 @@ Lo sviluppo responsabile dell'AI richiede attenzione a:
                 // Step 4: Invio email e aggiornamento sheet
                 updateProgress(88, 4, '📧 Preparazione email di notifica...');
                 
-                // Estrai abstract
+                // Estrai abstract/contenuto in base alla categoria
                 let abstract = 'Dispensa didattica generata da video YouTube';
+                const categoryUpper = category ? category.toUpperCase() : '';
+                const isIntervista = categoryUpper.includes('INTERVIST') || categoryUpper === 'INTERVISTE';
+                const isTedTalk = categoryUpper.includes('TED') || categoryUpper === 'TALK' || categoryUpper === 'TEDTALK' || categoryUpper === 'TED-TALK';
                 
-                console.log('=== DEBUG ESTRAZIONE ABSTRACT ===');
+                console.log('=== DEBUG ESTRAZIONE CONTENUTO PER SHEET ===');
+                console.log('Categoria:', category);
+                console.log('Is Intervista:', isIntervista);
+                console.log('Is TED-TALK:', isTedTalk);
                 console.log('Lunghezza dispensa:', dispensa.length);
                 console.log('Preview dispensa (primi 1000 caratteri):', dispensa.substring(0, 1000));
                 
-                const patterns = [
-                    /ABSTRACT\s*\n\n(.+?)(?=\n\nCORPO DELLA DISPENSA|$)/is,
-                    /##\s*ABSTRACT\s*\n\n(.+?)(?=\n\n##\s*CORPO|$)/is,
-                    /(?:##\s*)?2\.\s*ABSTRACT\s*\n\n(.+?)(?=\n\n(?:##\s*)?(?:3\.|CORPO)|$)/is,
-                    /(?:##\s*)?ABSTRACT\s*\n\n(.+?)(?=\n\n(?:##\s*)?(?:CORPO|#)|$)/is,
-                    /^ABSTRACT\s*\n\n(.+?)(?=\n\n(?:##\s*)?(?:CORPO|#)|$)/ims,
-                    /ABSTRACT[:\s]*\n\n(.+?)(?=\n\n(?:##\s*)?(?:CORPO|METADATI|#)|$)/is
-                ];
-                
-                for (let i = 0; i < patterns.length; i++) {
-                    const pattern = patterns[i];
-                    const match = dispensa.match(pattern);
+                if (isIntervista) {
+                    // Per INTERVISTE: estrai SEZIONE_PRESENTAZIONE
+                    console.log('🔍 Estrazione SEZIONE_PRESENTAZIONE per INTERVISTE...');
+                    const presentazionePatterns = [
+                        /\[SEZIONE_PRESENTAZIONE\]\s*\n\n(.+?)(?=\n\n\[SEZIONE_QA\]|$)/is,
+                        /SEZIONE_PRESENTAZIONE\s*\n\n(.+?)(?=\n\nSEZIONE_QA|$)/is,
+                        /##\s*SEZIONE_PRESENTAZIONE\s*\n\n(.+?)(?=\n\n##\s*SEZIONE_QA|$)/is,
+                        /(?:##\s*)?\[?SEZIONE_PRESENTAZIONE\]?\s*\n\n(.+?)(?=\n\n(?:##\s*)?\[?SEZIONE_QA\]?|$)/is
+                    ];
                     
-                    if (match && match[1]) {
-                        let extractedAbstract = match[1]
-                            .trim()
-                            .replace(/\*\*/g, '')
-                            .replace(/\*/g, '')
-                            .replace(/#/g, '')
-                            .replace(/^\s*[-*•]\s+/gm, '')
-                            .replace(/\n+/g, ' ')
-                            .replace(/\s+/g, ' ')
-                            .trim();
+                    for (let i = 0; i < presentazionePatterns.length; i++) {
+                        const pattern = presentazionePatterns[i];
+                        const match = dispensa.match(pattern);
+                        if (match && match[1]) {
+                            abstract = match[1]
+                                .trim()
+                                .replace(/\*\*/g, '')
+                                .replace(/\*/g, '')
+                                .replace(/#/g, '')
+                                .replace(/^\s*[-*•]\s+/gm, '')
+                                .replace(/\n+/g, ' ')
+                                .replace(/\s+/g, ' ')
+                                .trim();
+                            
+                            if (abstract.length > 50) {
+                                abstract = abstract.substring(0, 1000);
+                                console.log(`✅ SEZIONE_PRESENTAZIONE estratta con pattern ${i + 1}`);
+                                break;
+                            }
+                        }
+                    }
+                } else if (isTedTalk) {
+                    // Per TED-TALK: estrai "Contesto e Obiettivo del Talk" o sezione simile
+                    console.log('🔍 Estrazione Contesto e Obiettivo del Talk per TED-TALK...');
+                    const contestoPatterns = [
+                        /(?:##\s*)?Contesto\s+e\s+Obiettivo\s+del\s+Talk\s*\n\n(.+?)(?=\n\n(?:##\s*)?(?:Concetti|Idee|Implicazioni|Applicazioni|Punti|Approfondimenti|Domande|#)|$)/is,
+                        /(?:##\s*)?Contesto\s*\n\n(.+?)(?=\n\n(?:##\s*)?(?:Obiettivo|Concetti|Idee|Implicazioni|Applicazioni|Punti|Approfondimenti|Domande|#)|$)/is,
+                        /(?:##\s*)?Obiettivo\s+del\s+Talk\s*\n\n(.+?)(?=\n\n(?:##\s*)?(?:Concetti|Idee|Implicazioni|Applicazioni|Punti|Approfondimenti|Domande|#)|$)/is,
+                        /(?:##\s*)?(?:Contesto|Obiettivo)[:\s]*\n\n(.+?)(?=\n\n(?:##\s*)?(?:Concetti|Idee|Implicazioni|Applicazioni|Punti|Approfondimenti|Domande|#)|$)/is,
+                        /(?:##\s*)?1\.\s*(?:Contesto|Obiettivo)[:\s]*\n\n(.+?)(?=\n\n(?:##\s*)?(?:2\.|Concetti|Idee|Implicazioni|Applicazioni|Punti|Approfondimenti|Domande|#)|$)/is
+                    ];
+                    
+                    for (let i = 0; i < contestoPatterns.length; i++) {
+                        const pattern = contestoPatterns[i];
+                        const match = dispensa.match(pattern);
+                        if (match && match[1]) {
+                            abstract = match[1]
+                                .trim()
+                                .replace(/\*\*/g, '')
+                                .replace(/\*/g, '')
+                                .replace(/#/g, '')
+                                .replace(/^\s*[-*•]\s+/gm, '')
+                                .replace(/\n+/g, ' ')
+                                .replace(/\s+/g, ' ')
+                                .trim();
+                            
+                            if (abstract.length > 50) {
+                                abstract = abstract.substring(0, 1000);
+                                console.log(`✅ Contesto e Obiettivo del Talk estratto con pattern ${i + 1}`);
+                                break;
+                            }
+                        }
+                    }
+                    
+                    // Fallback: cerca la prima sezione dopo i metadati
+                    if (abstract === 'Dispensa didattica generata da video YouTube' || abstract.length < 50) {
+                        const metadatiEnd = dispensa.search(/Data di elaborazione[^\n]*\n\n/);
+                        if (metadatiEnd !== -1) {
+                            const firstSectionStart = dispensa.indexOf('\n\n', metadatiEnd + 50);
+                            const firstSectionEnd = dispensa.search(/\n\n(?:##\s*)?(?:Concetti|Idee|Implicazioni|Applicazioni|Punti|Approfondimenti|Domande|#)/);
+                            
+                            if (firstSectionStart !== -1 && firstSectionEnd !== -1 && firstSectionEnd > firstSectionStart) {
+                                abstract = dispensa.substring(firstSectionStart, firstSectionEnd)
+                                    .trim()
+                                    .replace(/\*\*/g, '')
+                                    .replace(/\*/g, '')
+                                    .replace(/#/g, '')
+                                    .replace(/^\s*[-*•]\s+/gm, '')
+                                    .replace(/\n+/g, ' ')
+                                    .replace(/\s+/g, ' ')
+                                    .trim();
+                                
+                                if (abstract.length > 50) {
+                                    abstract = abstract.substring(0, 1000);
+                                    console.log('✅ Prima sezione dopo metadati estratta come fallback');
+                                }
+                            }
+                        }
+                    }
+                } else {
+                    // Per STANDARD: estrai ABSTRACT (logica originale)
+                    console.log('🔍 Estrazione ABSTRACT per STANDARD...');
+                    const patterns = [
+                        /ABSTRACT\s*\n\n(.+?)(?=\n\nCORPO DELLA DISPENSA|$)/is,
+                        /##\s*ABSTRACT\s*\n\n(.+?)(?=\n\n##\s*CORPO|$)/is,
+                        /(?:##\s*)?2\.\s*ABSTRACT\s*\n\n(.+?)(?=\n\n(?:##\s*)?(?:3\.|CORPO)|$)/is,
+                        /(?:##\s*)?ABSTRACT\s*\n\n(.+?)(?=\n\n(?:##\s*)?(?:CORPO|#)|$)/is,
+                        /^ABSTRACT\s*\n\n(.+?)(?=\n\n(?:##\s*)?(?:CORPO|#)|$)/ims,
+                        /ABSTRACT[:\s]*\n\n(.+?)(?=\n\n(?:##\s*)?(?:CORPO|METADATI|#)|$)/is
+                    ];
+                    
+                    for (let i = 0; i < patterns.length; i++) {
+                        const pattern = patterns[i];
+                        const match = dispensa.match(pattern);
                         
-                        if (extractedAbstract.length > 50) {
-                            abstract = extractedAbstract.substring(0, 1000);
-                            break;
+                        if (match && match[1]) {
+                            let extractedAbstract = match[1]
+                                .trim()
+                                .replace(/\*\*/g, '')
+                                .replace(/\*/g, '')
+                                .replace(/#/g, '')
+                                .replace(/^\s*[-*•]\s+/gm, '')
+                                .replace(/\n+/g, ' ')
+                                .replace(/\s+/g, ' ')
+                                .trim();
+                            
+                            if (extractedAbstract.length > 50) {
+                                abstract = extractedAbstract.substring(0, 1000);
+                                console.log(`✅ Abstract estratto con pattern ${i + 1}`);
+                                break;
+                            }
+                        }
+                    }
+                    
+                    if (abstract === 'Dispensa didattica generata da video YouTube' || abstract.length < 50) {
+                        const abstractIndex = dispensa.search(/(?:##\s*)?2\.\s*ABSTRACT|ABSTRACT/i);
+                        const nextSectionIndex = dispensa.search(/(?:##\s*)?3\.|##\s*CORPO/i);
+                        
+                        if (abstractIndex !== -1 && nextSectionIndex !== -1 && nextSectionIndex > abstractIndex) {
+                            let alternativeAbstract = dispensa.substring(abstractIndex, nextSectionIndex)
+                                .replace(/(?:##\s*)?2\.\s*ABSTRACT|ABSTRACT/gi, '')
+                                .trim()
+                                .replace(/\*\*/g, '')
+                                .replace(/\*/g, '')
+                                .replace(/#/g, '')
+                                .replace(/^\s*[-*•]\s+/gm, '')
+                                .replace(/\n+/g, ' ')
+                                .replace(/\s+/g, ' ')
+                                .trim();
+                            
+                            if (alternativeAbstract.length > 50) {
+                                abstract = alternativeAbstract.substring(0, 1000);
+                            }
                         }
                     }
                 }
                 
-                if (abstract === 'Dispensa didattica generata da video YouTube' || abstract.length < 50) {
-                    const abstractIndex = dispensa.search(/(?:##\s*)?2\.\s*ABSTRACT|ABSTRACT/i);
-                    const nextSectionIndex = dispensa.search(/(?:##\s*)?3\.|##\s*CORPO/i);
-                    
-                    if (abstractIndex !== -1 && nextSectionIndex !== -1 && nextSectionIndex > abstractIndex) {
-                        let alternativeAbstract = dispensa.substring(abstractIndex, nextSectionIndex)
-                            .replace(/(?:##\s*)?2\.\s*ABSTRACT|ABSTRACT/gi, '')
-                            .trim()
-                            .replace(/\*\*/g, '')
-                            .replace(/\*/g, '')
-                            .replace(/#/g, '')
-                            .replace(/^\s*[-*•]\s+/gm, '')
-                            .replace(/\n+/g, ' ')
-                            .replace(/\s+/g, ' ')
-                            .trim();
-                        
-                        if (alternativeAbstract.length > 50) {
-                            abstract = alternativeAbstract.substring(0, 1000);
-                        }
-                    }
-                }
-                
-                console.log('=== FINE DEBUG ESTRAZIONE ABSTRACT ===');
+                console.log('=== FINE DEBUG ESTRAZIONE CONTENUTO PER SHEET ===');
                 
                 await sendEmail(driveResult.docUrl, url, abstract, videoData.title);
                 
