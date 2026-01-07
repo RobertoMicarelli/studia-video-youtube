@@ -1003,17 +1003,20 @@ TRASCRIZIONE:
             const categoryUpper = category ? category.toUpperCase() : '';
             const isIntervista = categoryUpper.includes('INTERVIST') || categoryUpper === 'INTERVISTE';
             const isTedTalk = categoryUpper.includes('TED') || categoryUpper === 'TALK' || categoryUpper === 'TEDTALK' || categoryUpper === 'TED-TALK';
+            const isTutorial = categoryUpper.includes('TUTORIAL') || categoryUpper.includes('AI') || categoryUpper.includes('INFORMATICA') || categoryUpper.includes('PROGRAMMAZIONE') || categoryUpper.includes('CODING') || categoryUpper.includes('TECNOLOGIA');
             
             let selectedPrompt;
             if (isIntervista) {
                 selectedPrompt = PROMPT_INTERVISTE_TEMPLATE;
             } else if (isTedTalk) {
                 selectedPrompt = PROMPT_TED_TALK_TEMPLATE;
+            } else if (isTutorial) {
+                selectedPrompt = PROMPT_TUTORIAL_TEMPLATE;
             } else {
                 selectedPrompt = PROMPT_TEMPLATE;
             }
             
-            console.log('Prompt selezionato:', isIntervista ? 'INTERVISTE' : (isTedTalk ? 'TED-TALK' : 'STANDARD'));
+            console.log('Prompt selezionato:', isIntervista ? 'INTERVISTE' : (isTedTalk ? 'TED-TALK' : (isTutorial ? 'TUTORIAL' : 'STANDARD')));
             
             const prompt = selectedPrompt
                 .replace('{{VIDEO_URL}}', videoUrl)
@@ -1751,11 +1754,13 @@ Lo sviluppo responsabile dell'AI richiede attenzione a:
                 const categoryUpper = category ? category.toUpperCase() : '';
                 const isIntervista = categoryUpper.includes('INTERVIST') || categoryUpper === 'INTERVISTE';
                 const isTedTalk = categoryUpper.includes('TED') || categoryUpper === 'TALK' || categoryUpper === 'TEDTALK' || categoryUpper === 'TED-TALK';
+                const isTutorial = categoryUpper.includes('TUTORIAL') || categoryUpper.includes('AI') || categoryUpper.includes('INFORMATICA') || categoryUpper.includes('PROGRAMMAZIONE') || categoryUpper.includes('CODING') || categoryUpper.includes('TECNOLOGIA');
                 
                 console.log('=== DEBUG ESTRAZIONE CONTENUTO PER SHEET ===');
                 console.log('Categoria:', category);
                 console.log('Is Intervista:', isIntervista);
                 console.log('Is TED-TALK:', isTedTalk);
+                console.log('Is Tutorial:', isTutorial);
                 console.log('Lunghezza dispensa:', dispensa.length);
                 console.log('Preview dispensa (primi 1000 caratteri):', dispensa.substring(0, 1000));
                 
