@@ -1745,6 +1745,75 @@ Lo sviluppo responsabile dell'AI richiede attenzione a:
         console.log('✓ Gmail API o SMTP per invio email');
         console.log('✓ Google Sheets API per tracciamento');
         console.log('\n%cQuesta demo simula tutte le chiamate API', 'font-size: 12px; color: #999;');
+
+        // Sistema di autenticazione
+        // Credenziali offuscate (Base64 encoding + reverse)
+        const AUTH_CONFIG = {
+            // Username: Roberto
+            // Password: LucyRoby3009,
+            username: 'Roberto',
+            passwordHash: btoa('LucyRoby3009,').split('').reverse().join('') // Offuscamento semplice
+        };
+
+        // Funzione per verificare le credenziali
+        function verifyCredentials(username, password) {
+            const passwordHash = btoa(password).split('').reverse().join('');
+            return username === AUTH_CONFIG.username && passwordHash === AUTH_CONFIG.passwordHash;
+        }
+
+        // Gestione login
+        function handleLogin(event) {
+            event.preventDefault();
+            
+            const username = document.getElementById('username').value.trim();
+            const password = document.getElementById('password').value;
+            const errorDiv = document.getElementById('loginError');
+            
+            if (verifyCredentials(username, password)) {
+                // Autenticazione riuscita
+                sessionStorage.setItem('authenticated', 'true');
+                sessionStorage.setItem('username', username);
+                
+                // Nascondi login e mostra app
+                document.getElementById('loginScreen').classList.add('hidden');
+                document.getElementById('mainApp').classList.remove('hidden');
+            } else {
+                // Credenziali errate
+                errorDiv.classList.remove('hidden');
+                document.getElementById('password').value = '';
+                document.getElementById('password').focus();
+                
+                // Nascondi errore dopo 3 secondi
+                setTimeout(() => {
+                    errorDiv.classList.add('hidden');
+                }, 3000);
+            }
+        }
+
+        // Verifica autenticazione all'avvio
+        function checkAuthentication() {
+            const isAuthenticated = sessionStorage.getItem('authenticated') === 'true';
+            
+            if (isAuthenticated) {
+                // Utente già autenticato
+                document.getElementById('loginScreen').classList.add('hidden');
+                document.getElementById('mainApp').classList.remove('hidden');
+            } else {
+                // Mostra schermata di login
+                document.getElementById('loginScreen').classList.remove('hidden');
+                document.getElementById('mainApp').classList.add('hidden');
+            }
+        }
+
+        // Controlla autenticazione quando la pagina si carica
+        checkAuthentication();
+
+        // Funzione per logout (opzionale, può essere aggiunta a un pulsante)
+        function logout() {
+            sessionStorage.removeItem('authenticated');
+            sessionStorage.removeItem('username');
+            location.reload();
+        }
     </script>
 </body>
 </html>
