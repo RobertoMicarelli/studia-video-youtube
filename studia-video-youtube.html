@@ -1722,14 +1722,16 @@ Lo sviluppo responsabile dell'AI richiede attenzione a:
                         }
                     }
                 } else if (isTedTalk) {
-                    // Per TED-TALK: estrai "Contesto e Obiettivo del Talk" o sezione simile
+                    // Per TED-TALK: estrai la prima sezione dopo i metadati (Contesto e Obiettivo)
                     console.log('🔍 Estrazione Contesto e Obiettivo del Talk per TED-TALK...');
+                    
+                    // Cerca pattern specifici per "Contesto e Obiettivo" o "1)" o "1."
                     const contestoPatterns = [
+                        /(?:##\s*)?(?:1\)|1\.)\s*Contesto\s+e\s+Obiettivo\s+del\s+Talk\s*\n\n(.+?)(?=\n\n(?:##\s*)?(?:2\)|2\.|Concetti|Idee|Implicazioni|Applicazioni|Punti|Approfondimenti|Domande|#)|$)/is,
                         /(?:##\s*)?Contesto\s+e\s+Obiettivo\s+del\s+Talk\s*\n\n(.+?)(?=\n\n(?:##\s*)?(?:Concetti|Idee|Implicazioni|Applicazioni|Punti|Approfondimenti|Domande|#)|$)/is,
+                        /(?:##\s*)?(?:1\)|1\.)\s*(?:Contesto|Obiettivo)[:\s]*\n\n(.+?)(?=\n\n(?:##\s*)?(?:2\)|2\.|Concetti|Idee|Implicazioni|Applicazioni|Punti|Approfondimenti|Domande|#)|$)/is,
                         /(?:##\s*)?Contesto\s*\n\n(.+?)(?=\n\n(?:##\s*)?(?:Obiettivo|Concetti|Idee|Implicazioni|Applicazioni|Punti|Approfondimenti|Domande|#)|$)/is,
-                        /(?:##\s*)?Obiettivo\s+del\s+Talk\s*\n\n(.+?)(?=\n\n(?:##\s*)?(?:Concetti|Idee|Implicazioni|Applicazioni|Punti|Approfondimenti|Domande|#)|$)/is,
-                        /(?:##\s*)?(?:Contesto|Obiettivo)[:\s]*\n\n(.+?)(?=\n\n(?:##\s*)?(?:Concetti|Idee|Implicazioni|Applicazioni|Punti|Approfondimenti|Domande|#)|$)/is,
-                        /(?:##\s*)?1\.\s*(?:Contesto|Obiettivo)[:\s]*\n\n(.+?)(?=\n\n(?:##\s*)?(?:2\.|Concetti|Idee|Implicazioni|Applicazioni|Punti|Approfondimenti|Domande|#)|$)/is
+                        /(?:##\s*)?Obiettivo\s+del\s+Talk\s*\n\n(.+?)(?=\n\n(?:##\s*)?(?:Concetti|Idee|Implicazioni|Applicazioni|Punti|Approfondimenti|Domande|#)|$)/is
                     ];
                     
                     for (let i = 0; i < contestoPatterns.length; i++) {
@@ -1754,16 +1756,29 @@ Lo sviluppo responsabile dell'AI richiede attenzione a:
                         }
                     }
                     
-                    // Fallback: cerca la prima sezione dopo i metadati
+                    // Fallback: cerca la prima sezione dopo i metadati (prima sezione con contenuto)
                     if (abstract === 'Dispensa didattica generata da video YouTube' || abstract.length < 50) {
+                        console.log('🔍 Fallback: ricerca prima sezione dopo metadati...');
                         const metadatiEnd = dispensa.search(/Data di elaborazione[^\n]*\n\n/);
                         if (metadatiEnd !== -1) {
-                            const firstSectionStart = dispensa.indexOf('\n\n', metadatiEnd + 50);
-                            const firstSectionEnd = dispensa.search(/\n\n(?:##\s*)?(?:Concetti|Idee|Implicazioni|Applicazioni|Punti|Approfondimenti|Domande|#)/);
+                            // Cerca il primo doppio a capo dopo i metadati
+                            let firstSectionStart = dispensa.indexOf('\n\n', metadatiEnd + 50);
+                            if (firstSectionStart === -1) {
+                                firstSectionStart = dispensa.indexOf('\n#', metadatiEnd + 50);
+                            }
                             
-                            if (firstSectionStart !== -1 && firstSectionEnd !== -1 && firstSectionEnd > firstSectionStart) {
-                                abstract = dispensa.substring(firstSectionStart, firstSectionEnd)
+                            // Cerca la fine della prima sezione (prossimo titolo o fine documento)
+                            const firstSectionEnd = dispensa.search(/\n\n(?:##\s*)?(?:2\)|2\.|Concetti|Idee|Implicazioni|Applicazioni|Punti|Approfondimenti|Domande|##|#)/);
+                            
+                            if (firstSectionStart !== -1) {
+                                const endPos = firstSectionEnd !== -1 && firstSectionEnd > firstSectionStart 
+                                    ? firstSectionEnd 
+                                    : Math.min(firstSectionStart + 2000, dispensa.length);
+                                
+                                let extractedText = dispensa.substring(firstSectionStart, endPos)
                                     .trim()
+                                    .replace(/^#+\s*/gm, '') // Rimuovi titoli markdown
+                                    .replace(/^\d+[\)\.]\s*/gm, '') // Rimuovi numerazione
                                     .replace(/\*\*/g, '')
                                     .replace(/\*/g, '')
                                     .replace(/#/g, '')
@@ -1772,10 +1787,36 @@ Lo sviluppo responsabile dell'AI richiede attenzione a:
                                     .replace(/\s+/g, ' ')
                                     .trim();
                                 
-                                if (abstract.length > 50) {
-                                    abstract = abstract.substring(0, 1000);
-                                    console.log('✅ Prima sezione dopo metadati estratta come fallback');
+                                if (extractedText.length > 50) {
+                                    abstract = extractedText.substring(0, 1000);
+                                    console.log('✅ Prima sezione dopo metadati estratta come fallback (lunghezza:', abstract.length, ')');
                                 }
+                            }
+                        }
+                    }
+                    
+                    // Ultimo fallback: prendi i primi 1000 caratteri dopo i metadati
+                    if (abstract === 'Dispensa didattica generata da video YouTube' || abstract.length < 50) {
+                        console.log('🔍 Ultimo fallback: primi caratteri dopo metadati...');
+                        const metadatiEnd = dispensa.search(/Data di elaborazione[^\n]*\n\n/);
+                        if (metadatiEnd !== -1) {
+                            const startPos = metadatiEnd + 100;
+                            const endPos = Math.min(startPos + 1000, dispensa.length);
+                            let extractedText = dispensa.substring(startPos, endPos)
+                                .trim()
+                                .replace(/^#+\s*/gm, '')
+                                .replace(/^\d+[\)\.]\s*/gm, '')
+                                .replace(/\*\*/g, '')
+                                .replace(/\*/g, '')
+                                .replace(/#/g, '')
+                                .replace(/^\s*[-*•]\s+/gm, '')
+                                .replace(/\n+/g, ' ')
+                                .replace(/\s+/g, ' ')
+                                .trim();
+                            
+                            if (extractedText.length > 50) {
+                                abstract = extractedText.substring(0, 1000);
+                                console.log('✅ Contenuto estratto con ultimo fallback (lunghezza:', abstract.length, ')');
                             }
                         }
                     }
