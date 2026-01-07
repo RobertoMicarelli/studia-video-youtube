@@ -663,51 +663,11 @@ TRASCRIZIONE:
 {{TRANSCRIPT}}`;
 
         // Prompt per OpenAI - PROMPT PER INTERVISTE
-        const PROMPT_INTERVISTE_TEMPLATE = `Tu sei un/una redattore/redattrice didattico/a professionale.
+        const PROMPT_INTERVISTE_TEMPLATE = `TASK:
 
-Il tuo compito è trasformare la trascrizione di un video YouTube (intervista) in una dispensa didattica strutturata, chiara, DETTAGLIATA e COMPLETA, pronta per l'uso in contesti formativi (HR, azienda, università, formazione continua).
-
-IMPORTANTE: La dispensa deve essere MOLTO DETTAGLIATA e APPROFONDITA. Non sintetizzare eccessivamente: sviluppa ogni concetto in modo completo, fornisci esempi, spiegazioni approfondite e collegamenti tra le idee. La dispensa deve essere lunga almeno 3-4 volte la lunghezza della trascrizione originale (dopo la pulizia delle ripetizioni).
-
-INPUT ATTESO:
-
-La trascrizione estratta dal link video dato in input tramite le API Youtube Video
-
-Trascrizione del video (anche molto lunga, con ripetizioni, interiezioni, commenti di chat, ecc.)
-
-Se qualche metadato (titolo, autore, URL) manca, non chiedere integrazioni: fai il meglio possibile con ciò che hai (es. segnala "Non disponibile" o lascia il campo vuoto in modo elegante).
-
-OBIETTIVO
-
-A partire dalla trascrizione:
-
-Ripulisci il contenuto (niente "ehm", ripetizioni, saluti iniziali/finali inutili, problemi tecnici, ecc.).
-
-Riorganizza il materiale in forma di dispensa didattica coerente, logica, scorrevole e MOLTO DETTAGLIATA.
-
-Mantieni TUTTI i concetti importanti, specialmente quelli teorici, tecnici e gli esempi che aiutano a capire.
-
-SVILUPPA ogni concetto in modo completo e approfondito: non limitarti a menzionare, ma spiega, approfondisci, fornisci contesto, esempi e dettagli.
-
-La dispensa deve essere lunga e completa: sviluppa ogni sezione in modo esaustivo, fornisci spiegazioni dettagliate, aggiungi esempi concreti, espandi i concetti chiave.
-
-Non inventare nuovi contenuti che nel video non ci sono; puoi solo:
-
-riformulare in modo più chiaro e dettagliato
-
-espandere e approfondire i concetti già presenti
-
-collegare meglio le idee già presenti con transizioni e spiegazioni
-
-fornire contesto e dettagli aggiuntivi per chiarire i concetti
-
-STRUTTURA OBBLIGATORIA DELL'OUTPUT
-
-Devi SEMPRE restituire il risultato in questo formato, in italiano:
+Elabora una trascrizione di intervista YouTube (domande e risposte) e trasformala in contenuto editoriale strutturato.
 
 METADATI DEL VIDEO
-
-Scrivi in apertura:
 
 Autore: {{AUTORE}}
 
@@ -719,153 +679,88 @@ Temi Trattati: {{TEMI_TRATTATI}}
 
 Data di elaborazione: ${new Date().toLocaleDateString('it-IT')}
 
-IMPORTANTE: Usa ESATTAMENTE i valori forniti sopra per Autore e Titolo. Non modificare o riformulare questi metadati, inseriscili così come sono.
+INPUT:
 
-ABSTRACT
-
-Un paragrafo di 3–4 righe che sintetizzi:
-
-l'argomento principale dell'intervista
-
-gli obiettivi formativi
-
-i punti chiave che verranno trattati
-
-il target di riferimento (es. HR, manager, formatori, studenti, ecc.)
-
-CORPO DELLA DISPENSA
-
-IMPORTANTE: Il CORPO DELLA DISPENSA deve essere MOLTO DETTAGLIATO e APPROFONDITO. Sviluppa ogni concetto in modo completo, non limitarti a sintetizzare. La dispensa deve essere lunga e completa.
-
-Struttura la trascrizione con il formato Domanda/Risposta:
-
-Per ogni domanda e risposta dell'intervista, usa questo formato:
-
-**Domanda:** "Trascrizione esatta della domanda"
-
-**Risposta:** "Trascrizione completa e dettagliata della risposta"
-
-Raggruppa le domande e risposte per temi o argomenti correlati, usando titoli e sottotitoli gerarchici in Markdown:
-
-# per le macro-sezioni tematiche
-
-## per gruppi di domande/risposte su un argomento specifico
-
-### per singole domande/risposte o approfondimenti
-
-Sviluppa ogni risposta in modo approfondito:
-- Mantieni la trascrizione completa e dettagliata
-- Aggiungi contesto e spiegazioni quando necessario
-- Collega le risposte tra loro con transizioni logiche
-- Espandi i concetti chiave con approfondimenti
-
-Mantieni paragrafi di lunghezza media (4–6 righe) per permettere uno sviluppo completo dei concetti.
-
-Evidenzia in grassetto:
-
-concetti chiave
-
-definizioni importanti
-
-frasi-sintesi davvero cruciali
-
-domande principali
-
-Usa elenchi puntati per:
-
-elencare definizioni
-
-citare vantaggi/svantaggi
-
-schematizzare modelli o tassonomie
-
-Elimina:
-
-ripetizioni
-
-interruzioni tecniche
-
-riferimenti di "regia" (audio che non va, chat tecnica, ecc.)
-
-saluti e convenevoli non rilevanti
-
-Mantieni invece:
-
-tutte le domande e risposte complete
-
-esempi chiarificatori
-
-passaggi in cui l'intervistato esplicita modelli, tassonomie, distinzioni teoriche
-
-TAG DEI CONTENUTI TRATTATI
-
-Dopo il CORPO DELLA DISPENSA, inserisci una sezione con i TAG dei contenuti trattati.
-
-Seleziona parole semanticamente rilevanti che rappresentano i temi principali dell'intervista.
-
-Formato: #tag1 #tag2 #tag3 #tag4 #tag5 (massimo 10-15 tag)
-
-SEZIONE TAKE AWAY
-
-Al termine del CORPO DELLA DISPENSA, crea una sezione TAKE AWAY che dalle domande e risposte tragga delle conclusioni DEDOTTE dai contenuti trattati.
-
-IMPORTANTE: Le conclusioni devono essere DEDOTTE e NON ALLUCINATE. Basati esclusivamente sui contenuti effettivamente presenti nell'intervista.
-
-La sezione TAKE AWAY deve includere:
-
-## Take Away
-
-- [3–5 conclusioni principali dedotte dalle domande e risposte]
-- [Collegamenti tra i temi trattati]
-- [Implicazioni pratiche emerse dall'intervista]
-
-LISTA TAG TOTALI
-
-Dopo la sezione TAKE AWAY, inserisci una lista completa di tutti i TAG utilizzati:
-
-## Lista Tag Totali
-
-#tag1 #tag2 #tag3 #tag4 #tag5 ... (tutti i tag rilevanti, massimo 15-20)
-
-SEZIONE FINALE
-
-Chiudi sempre con due sottosezioni:
-
-## Approfondimenti suggeriti
-
-- [Eventuali libri, articoli, autori, modelli citati nell'intervista]
-- [Se non ci sono approfondimenti citati, scrivi qualcosa di neutro tipo: "Nell'intervista non sono stati indicati approfondimenti specifici, ma si suggerisce di esplorare la letteratura su …"]
-
-## Applicazioni pratiche
-
-- [Come usare nella pratica i concetti esposti (es. cosa può fare un/una HR, un manager, un team leader, uno studente, ecc.)]
-
-TONO DI VOCE
-
-Professionale ma accessibile
-
-Chiaro, diretto, non accademico, ma concettualmente rigoroso
-
-Orientato all'apprendimento e alla consultazione rapida
-
-Mantieni la terminologia tecnica quando è utile, spiegandola con frasi semplici quando necessario.
-
-REGOLE E VINCOLI IMPORTANTI
-
-Non chiedere mai all'utente di "aspettare", "tenere duro" o simili: produci sempre la dispensa completa nella stessa risposta.
-
-Non fare domande di chiarimento all'utente: usa al meglio il materiale che hai.
-
-Non aggiungere note personali del tipo "secondo me l'intervistato…": mantieni un taglio neutro e descrittivo, riportando il pensiero dell'intervistato.
-
-Non cambiare lingua: lavora sempre in italiano, anche se nella trascrizione compaiono parole di altre lingue.
-
-Se nella trascrizione c'è confusione, sovrapposizione o audio disturbato, fai una ricostruzione prudente e lineare, evitando di inventare contenuti.
-
-NON ALLUCINARE: Le conclusioni nella sezione TAKE AWAY devono essere DEDOTTE esclusivamente dai contenuti presenti nell'intervista. Non inventare conclusioni che non sono supportate dalle domande e risposte.
+Trascrizione grezza contenente possibili errori di battitura, parole mal trascritte, intercalari e parti colloquiali.
 
 TRASCRIZIONE:
-{{TRANSCRIPT}}`;
+{{TRANSCRIPT}}
+
+OUTPUT STRUTTURATO:
+
+[SEZIONE_PRESENTAZIONE]
+
+- Presentazione professionale dell'intervistato.
+
+- Basata su introduzione dell'intervistatore + eventuali dettagli emersi nella prima risposta.
+
+- Nessuna informazione inventata.
+
+[SEZIONE_QA]
+
+Ripetere per ogni domanda:
+
+DOMANDA:
+
+- Testo corretto e ripulito.
+
+- Nessun elemento colloquiale.
+
+- Significato invariato.
+
+RISPOSTA:
+
+- Testo corretto, fluido e completo.
+
+- Errori di trascrizione corretti.
+
+- Nessuna sintesi dei contenuti.
+
+TAG:
+
+- 3–7 tag rappresentativi dei temi principali trattati nella risposta.
+
+- Formato hashtag.
+
+[SEZIONE_FINALE]
+
+TAKE_AWAY:
+
+- 10 insight chiave dedotti dai contenuti complessivi.
+
+TEMI_MACRO:
+
+- Elenco macro-argomenti trattati.
+
+- Breve descrizione per ciascuno.
+
+TAG_COMPLETI:
+
+- Elenco unico di tutti i tag.
+
+- Senza duplicati.
+
+- Ordinati per rilevanza.
+
+DOMANDE_ELENCO:
+
+- Elenco numerato di tutte le domande poste.
+
+- Forma corretta e pulita.
+
+REGOLE:
+
+- Nessuna opinione personale.
+
+- Nessuna informazione inventata.
+
+- Nessuna spiegazione del processo.
+
+- Output solo nelle sezioni definite.
+
+- Lavora sempre in italiano.
+
+- Se nella trascrizione c'è confusione, sovrapposizione o audio disturbato, fai una ricostruzione prudente e lineare, evitando di inventare contenuti.`;
 
         let currentVideoData = {};
 
