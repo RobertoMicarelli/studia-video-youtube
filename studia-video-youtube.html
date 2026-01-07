@@ -2157,6 +2157,72 @@ Lo sviluppo responsabile dell'AI richiede attenzione a:
                             }
                         }
                     }
+                } else if (isTutorial) {
+                    // Per TUTORIAL: estrai sezione METADATA
+                    console.log('🔍 Estrazione METADATA per TUTORIAL...');
+                    const metadataPatterns = [
+                        /(?:##\s*)?1\.\s*METADATA\s*\n\n(.+?)(?=\n\n(?:##\s*)?(?:2\.|ABSTRACT|INDICE|CONTENUTO|#)|$)/is,
+                        /(?:##\s*)?METADATA\s*\n\n(.+?)(?=\n\n(?:##\s*)?(?:ABSTRACT|INDICE|CONTENUTO|#)|$)/is,
+                        /─────────────────────────────────────────────────────────────────\s*\n1\.\s*METADATA\s*\n─────────────────────────────────────────────────────────────────\s*\n\n(.+?)(?=\n\n─────────────────────────────────────────────────────────────────|$)/is,
+                        /METADATA[:\s]*\n\n(.+?)(?=\n\n(?:##\s*)?(?:ABSTRACT|INDICE|CONTENUTO|#)|$)/is
+                    ];
+                    
+                    for (let i = 0; i < metadataPatterns.length; i++) {
+                        const pattern = metadataPatterns[i];
+                        const match = dispensa.match(pattern);
+                        if (match && match[1]) {
+                            abstract = match[1]
+                                .trim()
+                                .replace(/\*\*/g, '')
+                                .replace(/\*/g, '')
+                                .replace(/#/g, '')
+                                .replace(/^\s*[-*•]\s+/gm, '')
+                                .replace(/────────────────+/g, '')
+                                .replace(/\n+/g, ' ')
+                                .replace(/\s+/g, ' ')
+                                .trim();
+                            
+                            if (abstract.length > 50) {
+                                abstract = abstract.substring(0, 1000);
+                                console.log(`✅ METADATA estratta con pattern ${i + 1}`);
+                                break;
+                            }
+                        }
+                    }
+                    
+                    // Fallback: cerca la sezione METADATA dopo i metadati iniziali
+                    if (abstract === 'Dispensa didattica generata da video YouTube' || abstract.length < 50) {
+                        console.log('🔍 Fallback: ricerca sezione METADATA...');
+                        const metadatiEnd = dispensa.search(/Data di elaborazione[^\n]*\n\n/);
+                        if (metadatiEnd !== -1) {
+                            const metadataStart = dispensa.search(/(?:##\s*)?(?:1\.\s*)?METADATA/i);
+                            if (metadataStart !== -1 && metadataStart > metadatiEnd) {
+                                const metadataEnd = dispensa.search(/\n\n(?:##\s*)?(?:2\.|ABSTRACT|INDICE|CONTENUTO|#)/, metadataStart);
+                                const endPos = metadataEnd !== -1 && metadataEnd > metadataStart 
+                                    ? metadataEnd 
+                                    : Math.min(metadataStart + 1000, dispensa.length);
+                                
+                                let extractedText = dispensa.substring(metadataStart, endPos)
+                                    .trim()
+                                    .replace(/^#+\s*/gm, '')
+                                    .replace(/^\d+[\)\.]\s*METADATA\s*/gi, '')
+                                    .replace(/METADATA[:\s]*/gi, '')
+                                    .replace(/\*\*/g, '')
+                                    .replace(/\*/g, '')
+                                    .replace(/#/g, '')
+                                    .replace(/────────────────+/g, '')
+                                    .replace(/^\s*[-*•]\s+/gm, '')
+                                    .replace(/\n+/g, ' ')
+                                    .replace(/\s+/g, ' ')
+                                    .trim();
+                                
+                                if (extractedText.length > 50) {
+                                    abstract = extractedText.substring(0, 1000);
+                                    console.log('✅ METADATA estratta come fallback (lunghezza:', abstract.length, ')');
+                                }
+                            }
+                        }
+                    }
                 } else {
                     // Per STANDARD: estrai ABSTRACT (logica originale)
                     console.log('🔍 Estrazione ABSTRACT per STANDARD...');
