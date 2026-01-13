@@ -2368,13 +2368,21 @@ Lo sviluppo responsabile dell'AI richiede attenzione a:
             // Username: RobertoTV
             // Password: LucyRoby3009,.
             username: 'RobertoTV',
-            passwordHash: btoa('LucyRoby3009,.').split('').reverse().join('') // Offuscamento semplice
+            passwordHash: btoa('LucyRoby3009,.').split('').reverse().join(''), // Offuscamento semplice
+            // Token condiviso per autenticazione automatica da altre app
+            // Generato da: btoa('RobertoTV:LucyRoby3009,.').split('').reverse().join('')
+            sharedToken: btoa('RobertoTV:LucyRoby3009,.').split('').reverse().join('')
         };
 
         // Funzione per verificare le credenziali
         function verifyCredentials(username, password) {
             const passwordHash = btoa(password).split('').reverse().join('');
             return username === AUTH_CONFIG.username && passwordHash === AUTH_CONFIG.passwordHash;
+        }
+
+        // Funzione per autenticazione automatica con token
+        function autoLoginWithToken(token) {
+            return token === AUTH_CONFIG.sharedToken;
         }
 
         // Gestione login
@@ -2410,10 +2418,104 @@ Lo sviluppo responsabile dell'AI richiede attenzione a:
         function checkAuthentication() {
             const isAuthenticated = sessionStorage.getItem('authenticated') === 'true';
             
+            // Leggi parametri URL per autenticazione automatica e precompilazione
+            const urlParams = new URLSearchParams(window.location.search);
+            const autoAuthToken = urlParams.get('autoAuth');
+            const videoUrl = urlParams.get('videoUrl');
+            const suggestedCategory = urlParams.get('category');
+            
+            // Se c'è un token di autenticazione automatica valido, fai login automatico
+            if (autoAuthToken && autoLoginWithToken(autoAuthToken)) {
+                sessionStorage.setItem('authenticated', 'true');
+                sessionStorage.setItem('username', AUTH_CONFIG.username);
+                
+                // Nascondi login e mostra app
+                document.getElementById('loginScreen').classList.add('hidden');
+                document.getElementById('mainApp').classList.remove('hidden');
+                
+                // Precompila URL del video se presente
+                if (videoUrl) {
+                    const youtubeUrlInput = document.getElementById('youtubeUrl');
+                    if (youtubeUrlInput) {
+                        youtubeUrlInput.value = decodeURIComponent(videoUrl);
+                    }
+                }
+                
+                // Pre-consiglia categoria se presente
+                if (suggestedCategory) {
+                    const categorySelect = document.getElementById('categorySelect');
+                    const categoryCustom = document.getElementById('categoryCustom');
+                    const categoryUpper = decodeURIComponent(suggestedCategory).toUpperCase();
+                    
+                    // Cerca se la categoria esiste nel dropdown
+                    if (categorySelect) {
+                        const options = Array.from(categorySelect.options);
+                        const matchingOption = options.find(opt => 
+                            opt.value.toUpperCase() === categoryUpper || 
+                            opt.text.toUpperCase().includes(categoryUpper)
+                        );
+                        
+                        if (matchingOption) {
+                            categorySelect.value = matchingOption.value;
+                        } else if (categoryCustom) {
+                            // Se non trovata, suggerisci nel campo personalizzato
+                            categoryCustom.value = categoryUpper;
+                            categoryCustom.placeholder = `Suggerita: ${categoryUpper}`;
+                            categoryCustom.style.borderColor = '#667eea';
+                            categoryCustom.style.boxShadow = '0 0 0 3px rgba(102, 126, 234, 0.1)';
+                        }
+                    }
+                }
+                
+                // Rimuovi parametri URL per sicurezza dopo averli letti
+                const cleanUrl = window.location.pathname + (window.location.hash || '');
+                window.history.replaceState({}, document.title, cleanUrl);
+                
+                return;
+            }
+            
             if (isAuthenticated) {
                 // Utente già autenticato
                 document.getElementById('loginScreen').classList.add('hidden');
                 document.getElementById('mainApp').classList.remove('hidden');
+                
+                // Precompila URL del video se presente (anche se già autenticato)
+                if (videoUrl) {
+                    const youtubeUrlInput = document.getElementById('youtubeUrl');
+                    if (youtubeUrlInput) {
+                        youtubeUrlInput.value = decodeURIComponent(videoUrl);
+                    }
+                }
+                
+                // Pre-consiglia categoria se presente
+                if (suggestedCategory) {
+                    const categorySelect = document.getElementById('categorySelect');
+                    const categoryCustom = document.getElementById('categoryCustom');
+                    const categoryUpper = decodeURIComponent(suggestedCategory).toUpperCase();
+                    
+                    if (categorySelect) {
+                        const options = Array.from(categorySelect.options);
+                        const matchingOption = options.find(opt => 
+                            opt.value.toUpperCase() === categoryUpper || 
+                            opt.text.toUpperCase().includes(categoryUpper)
+                        );
+                        
+                        if (matchingOption) {
+                            categorySelect.value = matchingOption.value;
+                        } else if (categoryCustom) {
+                            categoryCustom.value = categoryUpper;
+                            categoryCustom.placeholder = `Suggerita: ${categoryUpper}`;
+                            categoryCustom.style.borderColor = '#667eea';
+                            categoryCustom.style.boxShadow = '0 0 0 3px rgba(102, 126, 234, 0.1)';
+                        }
+                    }
+                }
+                
+                // Rimuovi parametri URL dopo averli letti
+                if (videoUrl || suggestedCategory) {
+                    const cleanUrl = window.location.pathname + (window.location.hash || '');
+                    window.history.replaceState({}, document.title, cleanUrl);
+                }
             } else {
                 // Mostra schermata di login
                 document.getElementById('loginScreen').classList.remove('hidden');
