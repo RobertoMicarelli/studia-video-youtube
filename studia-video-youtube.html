@@ -8,6 +8,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&family=Syne:wght@700&display=swap" rel="stylesheet">
     <script>
         tailwind.config = {
             theme: {
@@ -35,15 +36,16 @@
     </script>
     <style>
         body {
-            font-family: 'Inter', sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            font-family: 'DM Sans', -apple-system, sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
             min-height: 100vh;
+            color: #e8eaed;
         }
         
         .glass-card {
-            background: rgba(255, 255, 255, 0.95);
+            background: rgba(255, 255, 255, 0.03);
             backdrop-filter: blur(10px);
-            border: 1px solid rgba(255, 255, 255, 0.3);
+            border: 1px solid rgba(255, 255, 255, 0.1);
             box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
         }
 
@@ -198,11 +200,19 @@
     <div class="max-w-5xl mx-auto">
         <!-- Header -->
         <div class="text-center mb-8 slide-in">
-            <div class="text-6xl mb-4 float-animation">📚</div>
-            <h1 class="text-4xl md:text-5xl lg:text-6xl font-display font-bold text-white mb-3">
-                Studia i tuoi Video Preferiti
-            </h1>
-            <p class="text-lg md:text-xl text-white/90 font-light">
+            <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1rem; margin-bottom: 1rem;">
+                <img 
+                    src="./Icona-Trascrittino.png" 
+                    alt="Trascrittino Logo" 
+                    style="width: 120px; height: 120px; object-fit: contain; margin-bottom: 0.5rem;"
+                />
+                <div style="display: flex; align-items: center; justify-content: center; gap: 1rem;">
+                    <h1 style="font-family: 'Syne', sans-serif; font-size: 3rem; font-weight: 700; color: #0094B5; margin: 0;">
+                        Trascrittino
+                    </h1>
+                </div>
+            </div>
+            <p style="font-size: 1.125rem; color: #F3832C; max-width: 600px; margin: 0 auto;">
                 Trasforma qualsiasi video YouTube in dispense di studio professionali
             </p>
         </div>
@@ -211,19 +221,21 @@
         <div class="glass-card rounded-3xl p-6 md:p-10 mb-6 slide-in" style="animation-delay: 0.1s;">
             <!-- Input Section -->
             <div class="mb-8">
-                <label for="youtubeUrl" class="block text-sm font-semibold text-gray-700 mb-3">
+                <label for="youtubeUrl" style="display: block; margin-bottom: 0.75rem; font-size: 0.875rem; font-weight: 500; color: #F3832C; text-transform: uppercase; letter-spacing: 0.05em;">
                     🎬 Incolla il link del video YouTube
                 </label>
                 <input 
                     type="text" 
                     id="youtubeUrl" 
                     placeholder="https://www.youtube.com/watch?v=..."
-                    class="w-full px-5 py-4 border-2 border-gray-200 rounded-xl text-base focus:border-primary-500 transition-all"
+                    style="width: 100%; padding: 1rem 1.25rem; background: rgba(255, 255, 255, 0.05); border: 2px solid rgba(255, 255, 255, 0.1); border-radius: 12px; color: #e8eaed; font-size: 1rem; outline: none;"
+                    onfocus="this.style.borderColor='#0094B5'; this.style.boxShadow='0 0 0 3px rgba(0, 148, 181, 0.1)';"
+                    onblur="this.style.borderColor='rgba(255, 255, 255, 0.1)'; this.style.boxShadow='none';"
                 />
-                <p class="text-sm text-gray-500 mt-2">
+                <p style="margin-top: 0.75rem; font-size: 0.875rem; color: #F3832C;">
                     💡 Esempio: https://www.youtube.com/watch?v=dQw4w9WgXcQ
                 </p>
-                <p class="text-xs text-gray-400 mt-1">
+                <p style="margin-top: 0.5rem; font-size: 0.75rem; color: #F3832C;">
                     ⏱️ Limite massimo: 4 ore (240 minuti) di video
                 </p>
                 
@@ -246,40 +258,46 @@
             </div>
 
             <!-- Category Selection -->
-            <div id="categorySelection" class="mb-6 p-6 bg-white border border-gray-200 rounded-xl shadow-sm">
-                <h3 class="text-lg font-bold text-gray-800 mb-4">📁 Seleziona la cartella di destinazione</h3>
-                <div class="mb-4">
-                    <label for="categorySelect" class="block text-sm font-medium text-gray-700 mb-2">
+            <div id="categorySelection" class="mb-6" style="padding: 1.5rem; background: rgba(255, 255, 255, 0.02); border: 1px solid rgba(255, 255, 255, 0.05); border-radius: 12px;">
+                <h3 style="font-size: 1.125rem; font-weight: 700; color: #0094B5; margin-bottom: 1rem;">📁 Seleziona la cartella di destinazione</h3>
+                <div style="margin-bottom: 1rem;">
+                    <label for="categorySelect" style="display: block; font-size: 0.875rem; font-weight: 500; color: #F3832C; margin-bottom: 0.5rem;">
                         Cartella:
                     </label>
                     <select 
                         id="categorySelect" 
-                        class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent text-gray-800 font-medium"
+                        style="width: 100%; padding: 0.75rem 1rem; background: rgba(255, 255, 255, 0.05); border: 2px solid rgba(255, 255, 255, 0.1); border-radius: 8px; color: #e8eaed; font-weight: 500; outline: none;"
+                        onfocus="this.style.borderColor='#0094B5'; this.style.boxShadow='0 0 0 3px rgba(0, 148, 181, 0.1)';"
+                        onblur="this.style.borderColor='rgba(255, 255, 255, 0.1)'; this.style.boxShadow='none';"
                     >
-                        <option value="STUDIO AI">STUDIO AI</option>
-                        <option value="FORMAZIONE" selected>FORMAZIONE</option>
-                        <option value="INTERVISTE">INTERVISTE</option>
-                        <option value="APPLICAZIONI">APPLICAZIONI</option>
-                        <option value="FILOSOFIA">FILOSOFIA</option>
-                        <option value="COACHING">COACHING</option>
-                        <option value="VARIE">VARIE</option>
+                        <option value="STUDIO AI" style="background: #1a1a2e; color: #e8eaed;">STUDIO AI</option>
+                        <option value="FORMAZIONE" selected style="background: #1a1a2e; color: #e8eaed;">FORMAZIONE</option>
+                        <option value="INTERVISTE" style="background: #1a1a2e; color: #e8eaed;">INTERVISTE</option>
+                        <option value="APPLICAZIONI" style="background: #1a1a2e; color: #e8eaed;">APPLICAZIONI</option>
+                        <option value="FILOSOFIA" style="background: #1a1a2e; color: #e8eaed;">FILOSOFIA</option>
+                        <option value="COACHING" style="background: #1a1a2e; color: #e8eaed;">COACHING</option>
+                        <option value="VARIE" style="background: #1a1a2e; color: #e8eaed;">VARIE</option>
                     </select>
                 </div>
-                <div class="mb-6">
-                    <label for="categoryCustom" class="block text-sm font-medium text-gray-700 mb-2">
+                <div style="margin-bottom: 1.5rem;">
+                    <label for="categoryCustom" style="display: block; font-size: 0.875rem; font-weight: 500; color: #F3832C; margin-bottom: 0.5rem;">
                         Oppure inserisci un nome personalizzato (tutto in MAIUSCOLE):
                     </label>
                     <input 
                         type="text" 
                         id="categoryCustom" 
                         placeholder="es. TECNOLOGIA"
-                        class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent text-gray-800 uppercase"
+                        style="width: 100%; padding: 0.75rem 1rem; background: rgba(255, 255, 255, 0.05); border: 2px solid rgba(255, 255, 255, 0.1); border-radius: 8px; color: #e8eaed; text-transform: uppercase; outline: none;"
                         oninput="this.value = this.value.toUpperCase()"
+                        onfocus="this.style.borderColor='#0094B5'; this.style.boxShadow='0 0 0 3px rgba(0, 148, 181, 0.1)';"
+                        onblur="this.style.borderColor='rgba(255, 255, 255, 0.1)'; this.style.boxShadow='none';"
                     />
                 </div>
                 <button 
                     onclick="startProcessing()"
-                    class="w-full btn-primary text-white px-6 py-4 rounded-xl font-semibold text-base shadow-lg hover:shadow-xl transition-all flex items-center justify-center gap-2"
+                    style="width: 100%; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 1rem 1.5rem; border-radius: 12px; font-weight: 600; font-size: 1rem; border: none; cursor: pointer; transition: all 0.3s ease; display: flex; align-items: center; justify-content: center; gap: 0.5rem;"
+                    onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 10px 25px -5px rgba(102, 126, 234, 0.6)';"
+                    onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='none';"
                 >
                     <span>✨</span>
                     <span>Genera Dispensa</span>
@@ -290,45 +308,45 @@
             <div id="progressSection" class="hidden mb-8">
                 <div class="mb-4">
                     <div class="flex justify-between items-center mb-2">
-                        <span class="text-sm font-semibold text-gray-700">Progresso</span>
-                        <span id="progressPercent" class="text-sm font-bold gradient-text">0%</span>
+                        <span style="font-size: 0.875rem; font-weight: 600; color: #F3832C;">Progresso</span>
+                        <span id="progressPercent" style="font-size: 0.875rem; font-weight: 700; color: #0094B5;">0%</span>
                     </div>
-                    <div class="w-full bg-gray-200 rounded-full h-3 overflow-hidden">
-                        <div id="progressBar" class="progress-bar h-full rounded-full" style="width: 0%; background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);"></div>
+                    <div style="width: 100%; background: rgba(255, 255, 255, 0.1); border-radius: 9999px; height: 0.75rem; overflow: hidden;">
+                        <div id="progressBar" class="progress-bar" style="height: 100%; border-radius: 9999px; width: 0%; background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);"></div>
                     </div>
                 </div>
 
                 <!-- Steps -->
-                <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mt-6">
-                    <div class="step-item text-center" data-step="1">
-                        <div class="step-icon w-12 h-12 rounded-full bg-gray-200 mx-auto mb-2 flex items-center justify-center text-xl">
+                <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 0.75rem; margin-top: 1.5rem;">
+                    <div class="step-item" data-step="1" style="text-align: center;">
+                        <div class="step-icon" style="width: 3rem; height: 3rem; border-radius: 50%; background: rgba(255, 255, 255, 0.1); margin: 0 auto 0.5rem; display: flex; align-items: center; justify-content: center; font-size: 1.25rem;">
                             📥
                         </div>
-                        <p class="text-xs font-medium text-gray-600">Estrazione</p>
+                        <p style="font-size: 0.75rem; font-weight: 500; color: #F3832C;">Estrazione</p>
                     </div>
-                    <div class="step-item text-center" data-step="2">
-                        <div class="step-icon w-12 h-12 rounded-full bg-gray-200 mx-auto mb-2 flex items-center justify-center text-xl">
+                    <div class="step-item" data-step="2" style="text-align: center;">
+                        <div class="step-icon" style="width: 3rem; height: 3rem; border-radius: 50%; background: rgba(255, 255, 255, 0.1); margin: 0 auto 0.5rem; display: flex; align-items: center; justify-content: center; font-size: 1.25rem;">
                             🤖
                         </div>
-                        <p class="text-xs font-medium text-gray-600">Elaborazione AI</p>
+                        <p style="font-size: 0.75rem; font-weight: 500; color: #F3832C;">Elaborazione AI</p>
                     </div>
-                    <div class="step-item text-center" data-step="3">
-                        <div class="step-icon w-12 h-12 rounded-full bg-gray-200 mx-auto mb-2 flex items-center justify-center text-xl">
+                    <div class="step-item" data-step="3" style="text-align: center;">
+                        <div class="step-icon" style="width: 3rem; height: 3rem; border-radius: 50%; background: rgba(255, 255, 255, 0.1); margin: 0 auto 0.5rem; display: flex; align-items: center; justify-content: center; font-size: 1.25rem;">
                             💾
                         </div>
-                        <p class="text-xs font-medium text-gray-600">Salvataggio</p>
+                        <p style="font-size: 0.75rem; font-weight: 500; color: #F3832C;">Salvataggio</p>
                     </div>
-                    <div class="step-item text-center" data-step="4">
-                        <div class="step-icon w-12 h-12 rounded-full bg-gray-200 mx-auto mb-2 flex items-center justify-center text-xl">
+                    <div class="step-item" data-step="4" style="text-align: center;">
+                        <div class="step-icon" style="width: 3rem; height: 3rem; border-radius: 50%; background: rgba(255, 255, 255, 0.1); margin: 0 auto 0.5rem; display: flex; align-items: center; justify-content: center; font-size: 1.25rem;">
                             📧
                         </div>
-                        <p class="text-xs font-medium text-gray-600">Notifica</p>
+                        <p style="font-size: 0.75rem; font-weight: 500; color: #F3832C;">Notifica</p>
                     </div>
                 </div>
 
                 <!-- Status Message -->
-                <div id="statusMessage" class="mt-6 p-4 bg-blue-50 border border-blue-200 rounded-xl">
-                    <p class="text-sm text-blue-800 text-center font-medium">
+                <div id="statusMessage" style="margin-top: 1.5rem; padding: 1rem; background: rgba(0, 148, 181, 0.1); border: 1px solid rgba(0, 148, 181, 0.3); border-radius: 12px;">
+                    <p style="font-size: 0.875rem; color: #0094B5; text-align: center; font-weight: 500;">
                         In attesa di elaborazione...
                     </p>
                 </div>
@@ -336,26 +354,26 @@
 
             <!-- Result Section -->
             <div id="resultSection" class="hidden">
-                <div class="result-card p-6 rounded-xl mb-4">
-                    <div class="flex items-start gap-4">
-                        <div class="text-4xl">✅</div>
-                        <div class="flex-1">
-                            <h3 class="text-xl font-bold text-gray-800 mb-2">Dispensa Creata con Successo!</h3>
-                            <p class="text-gray-600 mb-4" id="resultDescription">
+                <div class="result-card" style="padding: 1.5rem; border-radius: 12px; margin-bottom: 1rem; background: linear-gradient(135deg, rgba(16, 185, 129, 0.1) 0%, rgba(5, 150, 105, 0.1) 100%); border-left: 4px solid #10b981;">
+                    <div style="display: flex; align-items: flex-start; gap: 1rem;">
+                        <div style="font-size: 2.25rem;">✅</div>
+                        <div style="flex: 1;">
+                            <h3 style="font-size: 1.25rem; font-weight: 700; color: #0094B5; margin-bottom: 0.5rem;">Dispensa Creata con Successo!</h3>
+                            <p style="color: #F3832C; margin-bottom: 1rem;" id="resultDescription">
                                 La tua dispensa è stata generata e salvata in Google Drive.
                             </p>
-                            <div class="space-y-2">
-                                <div class="flex items-center gap-2 text-sm">
-                                    <span class="font-semibold text-gray-700">📄 Documento:</span>
-                                    <a id="docLink" href="#" target="_blank" class="text-blue-600 hover:text-blue-700 underline">Apri in Google Drive</a>
+                            <div style="display: flex; flex-direction: column; gap: 0.5rem;">
+                                <div style="display: flex; align-items: center; gap: 0.5rem; font-size: 0.875rem;">
+                                    <span style="font-weight: 600; color: #F3832C;">📄 Documento:</span>
+                                    <a id="docLink" href="#" target="_blank" style="color: #0094B5; text-decoration: underline;">Apri in Google Drive</a>
                                 </div>
-                                <div class="flex items-center gap-2 text-sm">
-                                    <span class="font-semibold text-gray-700">📁 Cartella:</span>
-                                    <span id="folderName" class="text-gray-600">-</span>
+                                <div style="display: flex; align-items: center; gap: 0.5rem; font-size: 0.875rem;">
+                                    <span style="font-weight: 600; color: #F3832C;">📁 Cartella:</span>
+                                    <span id="folderName" style="color: #F3832C;">-</span>
                                 </div>
-                                <div class="flex items-center gap-2 text-sm">
-                                    <span class="font-semibold text-gray-700">📧 Email:</span>
-                                    <span class="text-green-600 font-medium">Inviata a roberto.micarelli@gmail.com</span>
+                                <div style="display: flex; align-items: center; gap: 0.5rem; font-size: 0.875rem;">
+                                    <span style="font-weight: 600; color: #F3832C;">📧 Email:</span>
+                                    <span style="color: #10b981; font-weight: 500;">Inviata a roberto.micarelli@gmail.com</span>
                                 </div>
                             </div>
                         </div>
@@ -364,7 +382,9 @@
 
                 <button 
                     onclick="resetApp()"
-                    class="w-full bg-gray-100 hover:bg-gray-200 text-gray-700 px-6 py-3 rounded-xl font-semibold transition-all"
+                    style="width: 100%; background: rgba(255, 255, 255, 0.1); color: #F3832C; padding: 0.75rem 1.5rem; border-radius: 12px; font-weight: 600; border: 2px solid rgba(255, 255, 255, 0.2); cursor: pointer; transition: all 0.3s ease;"
+                    onmouseover="this.style.background='rgba(255, 255, 255, 0.15)'; this.style.color='#0094B5';"
+                    onmouseout="this.style.background='rgba(255, 255, 255, 0.1)'; this.style.color='#F3832C';"
                 >
                     ➕ Elabora un Altro Video
                 </button>
@@ -433,10 +453,32 @@
             </div>
         </div>
 
-        <!-- Footer Note -->
-        <div class="mt-8 text-center text-white/80 text-sm">
-            <p>🔐 I tuoi dati sono al sicuro. L'app accede solo alle cartelle autorizzate nel tuo Google Drive.</p>
-            <p class="mt-2 text-xs text-white/60">Questa è una demo. Per la versione completa è necessario configurare le API di Google Drive, YouTube e OpenAI.</p>
+        <!-- Footer with Credits -->
+        <div style="margin-top: 4rem; padding-top: 2rem; border-top: 1px solid rgba(255, 255, 255, 0.1); text-align: center; color: #F3832C; font-size: 0.875rem;">
+            <p style="margin-bottom: 0.5rem; color: #0094B5;">
+                APP realizzata da <strong style="color: #0094B5;">Roberto Micarelli</strong>
+            </p>
+            <div style="display: flex; justify-content: center; align-items: center; gap: 1rem; flex-wrap: wrap;">
+                <a
+                    href="https://www.ai-utati.it"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    style="color: #F3832C; text-decoration: none; transition: color 0.3s ease;"
+                    onmouseover="this.style.color='#0094B5';"
+                    onmouseout="this.style.color='#F3832C';"
+                >
+                    https://www.ai-utati.it
+                </a>
+                <span style="color: #666;">•</span>
+                <a
+                    href="mailto:roberto@ai-utati.it"
+                    style="color: #F3832C; text-decoration: none; transition: color 0.3s ease;"
+                    onmouseover="this.style.color='#0094B5';"
+                    onmouseout="this.style.color='#F3832C';"
+                >
+                    roberto@ai-utati.it
+                </a>
+            </div>
         </div>
     </div>
 
