@@ -3,50 +3,84 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <title>Studia i tuoi Video Preferiti</title>
-    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Preconnect per performance -->
+    <link rel="preconnect" href="https://cdn.tailwindcss.com">
+    <link rel="dns-prefetch" href="https://cdn.tailwindcss.com">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    
+    <!-- Font: Un solo link consolidato (rimosso DM Sans/Syne duplicato) -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@600;700;800&display=swap" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&family=Syne:wght@700&display=swap" rel="stylesheet">
+    
+    <!-- Tailwind CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Config Tailwind con controllo caricamento -->
     <script>
-        tailwind.config = {
-            theme: {
-                extend: {
-                    fontFamily: {
-                        'sans': ['Inter', 'system-ui', 'sans-serif'],
-                        'display': ['Outfit', 'system-ui', 'sans-serif'],
-                    },
-                    colors: {
-                        primary: {
-                            50: '#f0f9ff',
-                            100: '#e0f2fe',
-                            500: '#0ea5e9',
-                            600: '#0284c7',
-                            700: '#0369a1',
-                        },
-                        accent: {
-                            500: '#8b5cf6',
-                            600: '#7c3aed',
+        (function() {
+            function initTailwind() {
+                if (typeof tailwind !== 'undefined') {
+                    tailwind.config = {
+                        theme: {
+                            extend: {
+                                fontFamily: {
+                                    'sans': ['Inter', 'system-ui', 'sans-serif'],
+                                    'display': ['Outfit', 'system-ui', 'sans-serif'],
+                                },
+                                colors: {
+                                    primary: {
+                                        50: '#f0f9ff',
+                                        100: '#e0f2fe',
+                                        500: '#0ea5e9',
+                                        600: '#0284c7',
+                                        700: '#0369a1',
+                                    },
+                                    accent: {
+                                        500: '#8b5cf6',
+                                        600: '#7c3aed',
+                                    }
+                                }
+                            }
                         }
-                    }
+                    };
+                } else {
+                    // Retry dopo 100ms se Tailwind non è ancora caricato
+                    setTimeout(initTailwind, 100);
                 }
             }
-        }
+            
+            // Prova immediatamente
+            initTailwind();
+            
+            // E anche quando il DOM è pronto
+            if (document.readyState === 'loading') {
+                document.addEventListener('DOMContentLoaded', initTailwind);
+            } else {
+                initTailwind();
+            }
+        })();
     </script>
     <style>
         body {
-            font-family: 'DM Sans', -apple-system, sans-serif;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
             background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
             min-height: 100vh;
             color: #e8eaed;
+            margin: 0;
+            padding: 0;
         }
         
         .glass-card {
             background: rgba(255, 255, 255, 0.03);
             backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px); /* Safari support */
             border: 1px solid rgba(255, 255, 255, 0.1);
             box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+            will-change: transform; /* Ottimizzazione performance */
+            transform: translateZ(0); /* Force GPU acceleration */
         }
 
         .gradient-text {
@@ -2594,6 +2628,26 @@ Lo sviluppo responsabile dell'AI richiede attenzione a:
             sessionStorage.removeItem('username');
             location.reload();
         }
+        
+        // Rileva errori di caricamento risorse (Tailwind, Fonts, etc.)
+        window.addEventListener('error', function(e) {
+            if (e.target && (e.target.tagName === 'SCRIPT' || e.target.tagName === 'LINK')) {
+                console.error('⚠️ Risorsa non caricata:', e.target.src || e.target.href);
+                // Log per debug in produzione
+                if (window.location.hostname.includes('vercel.app')) {
+                    console.warn('Problema di caricamento rilevato. Prova a ricaricare la pagina con Cmd+Shift+R (Mac) o Ctrl+Shift+R (Windows)');
+                }
+            }
+        }, true);
+        
+        // Verifica che Tailwind sia caricato correttamente
+        window.addEventListener('load', function() {
+            setTimeout(function() {
+                if (typeof tailwind === 'undefined') {
+                    console.warn('⚠️ Tailwind non caricato correttamente. Ricarica la pagina.');
+                }
+            }, 1000);
+        });
     </script>
 </body>
 </html>
