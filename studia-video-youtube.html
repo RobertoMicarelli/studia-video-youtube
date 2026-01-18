@@ -1236,25 +1236,87 @@ TRASCRIZIONE:
             return match ? match[4] : null;
         }
 
+        // Throttle per evitare aggiornamenti DOM eccessivi che bloccano Chrome
+        let lastUpdateTime = 0;
+        let pendingUpdate = null;
+        const UPDATE_THROTTLE_MS = 100; // Massimo 10 aggiornamenti al secondo
+        
         function updateProgress(percent, step, message) {
-            document.getElementById('progressBar').style.width = percent + '%';
-            document.getElementById('progressPercent').textContent = percent + '%';
-            document.getElementById('statusMessage').innerHTML = `
-                <p class="text-sm text-blue-800 text-center font-medium">${message}</p>
-            `;
-
-            // Update step icons
-            document.querySelectorAll('.step-item').forEach((item, index) => {
-                const icon = item.querySelector('.step-icon');
-                icon.classList.remove('active', 'completed');
+            const now = Date.now();
+            
+            // Throttle: accumula aggiornamenti rapidi
+            if (now - lastUpdateTime < UPDATE_THROTTLE_MS) {
+                // Salva l'ultimo aggiornamento richiesto
+                pendingUpdate = { percent, step, message };
                 
-                if (index + 1 < step) {
-                    icon.classList.add('completed');
-                } else if (index + 1 === step) {
-                    icon.classList.add('active');
-                    item.classList.add('active');
-                } else {
-                    item.classList.remove('active');
+                // Schedula l'aggiornamento dopo il throttle
+                if (!pendingUpdate.timeout) {
+                    pendingUpdate.timeout = setTimeout(() => {
+                        if (pendingUpdate) {
+                            performUpdate(pendingUpdate.percent, pendingUpdate.step, pendingUpdate.message);
+                            pendingUpdate = null;
+                        }
+                    }, UPDATE_THROTTLE_MS - (now - lastUpdateTime));
+                }
+                return;
+            }
+            
+            // Esegui l'aggiornamento immediatamente
+            performUpdate(percent, step, message);
+            lastUpdateTime = now;
+        }
+        
+        function performUpdate(percent, step, message) {
+            // Usa requestAnimationFrame per batchare gli aggiornamenti DOM
+            requestAnimationFrame(() => {
+                try {
+                    const progressBar = document.getElementById('progressBar');
+                    const progressPercent = document.getElementById('progressPercent');
+                    const statusMessage = document.getElementById('statusMessage');
+                    
+                    if (progressBar) {
+                        progressBar.style.width = percent + '%';
+                    }
+                    
+                    if (progressPercent) {
+                        progressPercent.textContent = percent + '%';
+                    }
+                    
+                    if (statusMessage) {
+                        // Usa textContent invece di innerHTML quando possibile (più veloce)
+                        const messageElement = statusMessage.querySelector('p');
+                        if (messageElement) {
+                            messageElement.textContent = message;
+                        } else {
+                            statusMessage.innerHTML = `<p class="text-sm text-blue-800 text-center font-medium">${message}</p>`;
+                        }
+                    }
+
+                    // Update step icons (batchato)
+                    const stepItems = document.querySelectorAll('.step-item');
+                    if (stepItems.length > 0) {
+                        stepItems.forEach((item, index) => {
+                            const icon = item.querySelector('.step-icon');
+                            if (!icon) return;
+                            
+                            // Rimuovi classi in batch
+                            icon.classList.remove('active', 'completed');
+                            
+                            if (index + 1 < step) {
+                                icon.classList.add('completed');
+                            } else if (index + 1 === step) {
+                                icon.classList.add('active');
+                                item.classList.add('active');
+                            } else {
+                                item.classList.remove('active');
+                            }
+                        });
+                    }
+                } catch (error) {
+                    // Silently fail per evitare loop di errori
+                    if (!isProduction) {
+                        originalConsole.error('Errore updateProgress:', error);
+                    }
                 }
             });
         }
@@ -2070,15 +2132,47 @@ Lo sviluppo responsabile dell'AI richiede attenzione a:
                 await new Promise(resolve => setTimeout(resolve, 500));
                 
                 updateProgress(40, 2, '🤖 Elaborazione con OpenAI GPT...');
-                const dispensa = await processWithOpenAI(
-                    videoData.transcript, 
-                    videoData.title, 
-                    url, 
-                    videoData.author,
-                    videoData.temiTrattati,
-                    category
-                );
-                currentVideoData.dispensa = dispensa;
+                
+                // Durante l'elaborazione OpenAI (può richiedere molto tempo), 
+                // evita aggiornamenti DOM eccessivi che bloccano Chrome
+                let progressInterval = null;
+                let progressCounter = 0;
+                const progressMessages = [
+                    '🤖 Elaborazione con OpenAI GPT...',
+                    '🤖 Analisi del contenuto...',
+                    '🤖 Generazione della dispensa...',
+                    '🤖 Ottimizzazione del testo...'
+                ];
+                
+                // Aggiorna il messaggio ogni 3 secondi (non troppo spesso)
+                progressInterval = setInterval(() => {
+                    progressCounter = (progressCounter + 1) % progressMessages.length;
+                    const statusMessage = document.getElementById('statusMessage');
+                    if (statusMessage) {
+                        const messageElement = statusMessage.querySelector('p');
+                        if (messageElement) {
+                            messageElement.textContent = progressMessages[progressCounter];
+                        }
+                    }
+                }, 3000);
+                
+                try {
+                    const dispensa = await processWithOpenAI(
+                        videoData.transcript, 
+                        videoData.title, 
+                        url, 
+                        videoData.author,
+                        videoData.temiTrattati,
+                        category
+                    );
+                    currentVideoData.dispensa = dispensa;
+                } finally {
+                    // Pulisci l'intervallo quando finisce
+                    if (progressInterval) {
+                        clearInterval(progressInterval);
+                        progressInterval = null;
+                    }
+                }
 
                 updateProgress(65, 2, '✅ Dispensa generata con successo!');
                 await new Promise(resolve => setTimeout(resolve, 800));
