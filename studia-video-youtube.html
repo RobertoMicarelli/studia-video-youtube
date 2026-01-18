@@ -1434,29 +1434,47 @@ TRASCRIZIONE:
             }
 
             try {
-                const response = await fetch('/api/openai', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({
-                        transcript,
-                        videoTitle,
-                        videoUrl,
-                        author,
-                        prompt
-                    })
-                });
+                // Chrome macOS: aggiungi timeout per evitare blocchi
+                const controller = new AbortController();
+                const timeoutId = setTimeout(() => controller.abort(), 300000); // 5 minuti timeout
+                
+                try {
+                    const response = await fetch('/api/openai', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            transcript,
+                            videoTitle,
+                            videoUrl,
+                            author,
+                            prompt
+                        }),
+                        signal: controller.signal
+                    });
 
-                if (!response.ok) {
-                    const error = await response.json();
-                    throw new Error(error.error || 'Errore elaborazione OpenAI');
+                    clearTimeout(timeoutId);
+
+                    if (!response.ok) {
+                        const error = await response.json();
+                        throw new Error(error.error || 'Errore elaborazione OpenAI');
+                    }
+
+                    const data = await response.json();
+                    return data.dispensa;
+                } catch (fetchError) {
+                    clearTimeout(timeoutId);
+                    
+                    if (fetchError.name === 'AbortError') {
+                        throw new Error('Timeout: L\'elaborazione ha richiesto troppo tempo. Riprova con un video più corto.');
+                    }
+                    throw fetchError;
                 }
-
-                const data = await response.json();
-                return data.dispensa;
             } catch (error) {
-                console.error('Errore chiamata OpenAI:', error);
+                if (!isProduction) {
+                    originalConsole.error('Errore chiamata OpenAI:', error);
+                }
                 // Rilancia l'errore per gestirlo nel flusso principale
                 throw error;
             }
