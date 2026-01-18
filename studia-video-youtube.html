@@ -1281,8 +1281,8 @@ TRASCRIZIONE:
         }
         
         function performUpdate(percent, step, message) {
-            // Usa requestAnimationFrame per batchare gli aggiornamenti DOM
-            requestAnimationFrame(() => {
+            // Chrome macOS: usa setTimeout invece di requestAnimationFrame (più stabile)
+            const updateFn = () => {
                 try {
                     const progressBar = document.getElementById('progressBar');
                     const progressPercent = document.getElementById('progressPercent');
@@ -1306,25 +1306,29 @@ TRASCRIZIONE:
                         }
                     }
 
-                    // Update step icons (batchato)
-                    const stepItems = document.querySelectorAll('.step-item');
-                    if (stepItems.length > 0) {
-                        stepItems.forEach((item, index) => {
-                            const icon = item.querySelector('.step-icon');
-                            if (!icon) return;
-                            
-                            // Rimuovi classi in batch
-                            icon.classList.remove('active', 'completed');
-                            
-                            if (index + 1 < step) {
-                                icon.classList.add('completed');
-                            } else if (index + 1 === step) {
-                                icon.classList.add('active');
-                                item.classList.add('active');
-                            } else {
-                                item.classList.remove('active');
-                            }
-                        });
+                    // Update step icons (batchato) - solo se necessario
+                    // Chrome macOS: aggiorna step icons meno frequentemente
+                    if (!isChromeMac || step !== (window.lastStep || 0)) {
+                        window.lastStep = step;
+                        const stepItems = document.querySelectorAll('.step-item');
+                        if (stepItems.length > 0) {
+                            stepItems.forEach((item, index) => {
+                                const icon = item.querySelector('.step-icon');
+                                if (!icon) return;
+                                
+                                // Rimuovi classi in batch
+                                icon.classList.remove('active', 'completed');
+                                
+                                if (index + 1 < step) {
+                                    icon.classList.add('completed');
+                                } else if (index + 1 === step) {
+                                    icon.classList.add('active');
+                                    item.classList.add('active');
+                                } else {
+                                    item.classList.remove('active');
+                                }
+                            });
+                        }
                     }
                 } catch (error) {
                     // Silently fail per evitare loop di errori
@@ -1332,7 +1336,15 @@ TRASCRIZIONE:
                         originalConsole.error('Errore updateProgress:', error);
                     }
                 }
-            });
+            };
+            
+            // Chrome macOS: usa setTimeout con delay minimo per evitare accumulo
+            if (isChromeMac) {
+                setTimeout(updateFn, 0);
+            } else {
+                // Altri browser: usa requestAnimationFrame
+                requestAnimationFrame(updateFn);
+            }
         }
 
         async function getYouTubeTranscript(videoId) {
