@@ -21,56 +21,43 @@
     <!-- Config Tailwind con controllo caricamento -->
     <script>
         (function() {
-            let tailwindInitialized = false;
-            let retryCount = 0;
-            const MAX_RETRIES = 10; // Limite massimo per evitare loop infiniti
-            
             function initTailwind() {
-                // Evita chiamate multiple
-                if (tailwindInitialized) return;
-                
                 if (typeof tailwind !== 'undefined') {
-                    try {
-                        tailwind.config = {
-                            theme: {
-                                extend: {
-                                    fontFamily: {
-                                        'sans': ['Inter', 'system-ui', 'sans-serif'],
-                                        'display': ['Outfit', 'system-ui', 'sans-serif'],
+                    tailwind.config = {
+                        theme: {
+                            extend: {
+                                fontFamily: {
+                                    'sans': ['Inter', 'system-ui', 'sans-serif'],
+                                    'display': ['Outfit', 'system-ui', 'sans-serif'],
+                                },
+                                colors: {
+                                    primary: {
+                                        50: '#f0f9ff',
+                                        100: '#e0f2fe',
+                                        500: '#0ea5e9',
+                                        600: '#0284c7',
+                                        700: '#0369a1',
                                     },
-                                    colors: {
-                                        primary: {
-                                            50: '#f0f9ff',
-                                            100: '#e0f2fe',
-                                            500: '#0ea5e9',
-                                            600: '#0284c7',
-                                            700: '#0369a1',
-                                        },
-                                        accent: {
-                                            500: '#8b5cf6',
-                                            600: '#7c3aed',
-                                        }
+                                    accent: {
+                                        500: '#8b5cf6',
+                                        600: '#7c3aed',
                                     }
                                 }
                             }
-                        };
-                        tailwindInitialized = true;
-                    } catch (e) {
-                        // Silently fail se c'è un errore
-                    }
+                        }
+                    };
                 } else {
-                    // Retry con limite massimo per evitare loop infiniti
-                    if (retryCount < MAX_RETRIES) {
-                        retryCount++;
-                        setTimeout(initTailwind, 100);
-                    }
-                    // Se superato il limite, continua comunque senza Tailwind config
+                    // Retry dopo 100ms se Tailwind non è ancora caricato
+                    setTimeout(initTailwind, 100);
                 }
             }
             
-            // Prova quando il DOM è pronto (solo una volta)
+            // Prova immediatamente
+            initTailwind();
+            
+            // E anche quando il DOM è pronto
             if (document.readyState === 'loading') {
-                document.addEventListener('DOMContentLoaded', initTailwind, { once: true });
+                document.addEventListener('DOMContentLoaded', initTailwind);
             } else {
                 initTailwind();
             }
@@ -532,20 +519,6 @@
     </div>
 
     <script>
-        // Disabilita console.log eccessivi per evitare blocchi Chrome DevTools
-        const isProduction = window.location.hostname.includes('vercel.app') || !window.location.hostname.includes('localhost');
-        const originalConsole = {
-            log: console.log.bind(console),
-            error: console.error.bind(console),
-            warn: console.warn.bind(console)
-        };
-        
-        // Limita console.log per evitare accumulo che blocca Chrome
-        if (isProduction) {
-            console.log = function() {};
-            console.warn = function() {};
-        }
-        
         // Configurazione
         const CONFIG = {
             driveFolder: '1nhFM1-c2lG9xKPdMjQfLPqU6jtofrRRH',
@@ -611,11 +584,11 @@
                             localStorage.setItem('googleAccessToken', googleAccessToken);
                             localStorage.setItem('googleTokenExpiresAt', newExpiresAt.toString());
                             
-                            // Token refreshato silenziosamente
+                            console.log('Token Google refreshato all\'avvio');
                             updateAuthStatus();
                         })
                         .catch(error => {
-                            // Errore refresh token gestito silenziosamente
+                            console.warn('Impossibile refreshare il token Google all\'avvio:', error);
                             googleAccessToken = null;
                             localStorage.removeItem('googleAccessToken');
                             localStorage.removeItem('googleTokenExpiresAt');
@@ -624,7 +597,7 @@
                         });
                     } else {
                         // Nessun refresh token disponibile, rimuovi access token
-                        // Token scaduto, richiederà nuova autenticazione
+                        console.warn('Token Google scaduto e nessun refresh token disponibile');
                         googleAccessToken = null;
                         localStorage.removeItem('googleAccessToken');
                         localStorage.removeItem('googleTokenExpiresAt');
@@ -1310,7 +1283,13 @@ TRASCRIZIONE:
             const autoreFinale = author || 'Non disponibile';
             const titoloFinale = videoTitle || 'Non disponibile';
             
-            // Metadati preparati per il prompt (log disabilitati per performance)
+            console.log('=== METADATI PER PROMPT ===');
+            console.log('Autore:', autoreFinale);
+            console.log('Titolo:', titoloFinale);
+            console.log('URL:', videoUrl);
+            console.log('Temi:', temiFinali);
+            console.log('Categoria:', category);
+            console.log('===========================');
             
             // Seleziona il prompt in base alla categoria
             const categoryUpper = category ? category.toUpperCase() : '';
@@ -1329,7 +1308,7 @@ TRASCRIZIONE:
                 selectedPrompt = PROMPT_TEMPLATE;
             }
             
-            // Prompt selezionato in base alla categoria (log disabilitato per performance)
+            console.log('Prompt selezionato:', isIntervista ? 'INTERVISTE' : (isTedTalk ? 'TED-TALK' : (isTutorial ? 'TUTORIAL' : 'STANDARD')));
             
             const prompt = selectedPrompt
                 .replace('{{VIDEO_URL}}', videoUrl)
@@ -1338,9 +1317,10 @@ TRASCRIZIONE:
                 .replace('{{TITOLO}}', titoloFinale)
                 .replace('{{TRANSCRIPT}}', transcript);
             
-            // Debug: verifica che i placeholder siano stati sostituiti (log disabilitato per performance)
+            // Debug: verifica che i placeholder siano stati sostituiti
             if (prompt.includes('{{AUTORE}}') || prompt.includes('{{TITOLO}}')) {
-                // Placeholder non sostituiti - gestito silenziosamente
+                console.warn('⚠️ ATTENZIONE: Alcuni placeholder non sono stati sostituiti!');
+                console.log('Prompt preview (primi 500 caratteri):', prompt.substring(0, 500));
             }
 
             try {
@@ -1624,14 +1604,11 @@ Lo sviluppo responsabile dell'AI richiede attenzione a:
                         localStorage.setItem('googleAccessToken', googleAccessToken);
                         localStorage.setItem('googleTokenExpiresAt', newExpiresAt.toString());
                         
-                        // Token refreshato silenziosamente
+                        console.log('Token Google refreshato automaticamente');
                         return true;
                     }
                 } catch (error) {
-                    // Mantieni solo errori critici
-                    if (!isProduction) {
-                        originalConsole.error('Errore durante refresh token:', error);
-                    }
+                    console.error('Errore durante refresh token:', error);
                 }
             }
             return false;
@@ -1667,14 +1644,11 @@ Lo sviluppo responsabile dell'AI richiede attenzione a:
                         localStorage.setItem('googleAccessToken', googleAccessToken);
                         localStorage.setItem('googleTokenExpiresAt', newExpiresAt.toString());
                         
-                        // Token refreshato silenziosamente
+                        console.log('Token Google refreshato automaticamente');
                         return true;
                     }
                 } catch (error) {
-                    // Mantieni solo errori critici
-                    if (!isProduction) {
-                        originalConsole.error('Errore durante refresh token:', error);
-                    }
+                    console.error('Errore durante refresh token:', error);
                 }
             }
             return false;
@@ -2655,19 +2629,25 @@ Lo sviluppo responsabile dell'AI richiede attenzione a:
             location.reload();
         }
         
-        // Rileva errori di caricamento risorse (solo una volta, con cleanup)
-        let errorHandlerAdded = false;
-        if (!errorHandlerAdded) {
-            errorHandlerAdded = true;
-            window.addEventListener('error', function(e) {
-                if (e.target && (e.target.tagName === 'SCRIPT' || e.target.tagName === 'LINK')) {
-                    // Solo errori critici, no spam
-                    if (!isProduction) {
-                        originalConsole.error('⚠️ Risorsa non caricata:', e.target.src || e.target.href);
-                    }
+        // Rileva errori di caricamento risorse (Tailwind, Fonts, etc.)
+        window.addEventListener('error', function(e) {
+            if (e.target && (e.target.tagName === 'SCRIPT' || e.target.tagName === 'LINK')) {
+                console.error('⚠️ Risorsa non caricata:', e.target.src || e.target.href);
+                // Log per debug in produzione
+                if (window.location.hostname.includes('vercel.app')) {
+                    console.warn('Problema di caricamento rilevato. Prova a ricaricare la pagina con Cmd+Shift+R (Mac) o Ctrl+Shift+R (Windows)');
                 }
-            }, { once: false, passive: true });
-        }
+            }
+        }, true);
+        
+        // Verifica che Tailwind sia caricato correttamente
+        window.addEventListener('load', function() {
+            setTimeout(function() {
+                if (typeof tailwind === 'undefined') {
+                    console.warn('⚠️ Tailwind non caricato correttamente. Ricarica la pagina.');
+                }
+            }, 1000);
+        });
     </script>
 </body>
 </html>
