@@ -556,6 +556,9 @@
         // Configurazione - Le API keys sono gestite dal backend (Vercel Functions)
         // Non esporre mai API keys nel codice frontend!
         let googleAccessToken = null;
+        
+        // Flag per prevenire chiamate multiple simultanee (CRITICO per Chrome)
+        let isProcessing = false;
 
         // Recupera token da URL se presente (dopo OAuth callback)
         const urlParams = new URLSearchParams(window.location.search);
@@ -1281,8 +1284,7 @@ TRASCRIZIONE:
                     description: data.description || ''
                 };
             } catch (error) {
-                console.error('Errore YouTube API:', error);
-                // Fallback a modalità demo in caso di errore
+                // Errore YouTube API gestito silenziosamente, fallback a modalità demo
                 return new Promise((resolve) => {
                     setTimeout(() => {
                         resolve({
@@ -1981,10 +1983,10 @@ Lo sviluppo responsabile dell'AI richiede attenzione a:
                     predefinedOptions.forEach(opt => categorySelect.appendChild(opt));
                     customOptions.forEach(opt => categorySelect.appendChild(opt));
                     
-                    console.log('✅ Cartelle caricate:', data.folders.length);
+                    // Cartelle caricate (log disabilitato)
                 }
             } catch (error) {
-                console.error('Errore caricamento cartelle:', error);
+                // Errore caricamento cartelle gestito silenziosamente
             }
         }
         
@@ -2006,34 +2008,50 @@ Lo sviluppo responsabile dell'AI richiede attenzione a:
         };
 
         async function startProcessing() {
-            const urlInput = document.getElementById('youtubeUrl');
-            const url = urlInput.value.trim();
+            // PROTEZIONE CRITICA: Previene chiamate multiple simultanee (problema Chrome)
+            if (isProcessing) {
+                return; // Ignora chiamate multiple
+            }
             
-            if (!url) {
-                alert('⚠️ Per favore, inserisci un URL YouTube valido');
-                return;
-            }
-
-            const videoId = validateYouTubeUrl(url);
-            if (!videoId) {
-                alert('⚠️ URL YouTube non valido. Assicurati che sia nel formato corretto.\n\nEsempio: https://www.youtube.com/watch?v=dQw4w9WgXcQ');
-                return;
-            }
-
-            // Ottieni la categoria selezionata
-            const selectedCategory = document.getElementById('categorySelect').value;
-            const customCategory = document.getElementById('categoryCustom').value.trim();
-            const category = customCategory || selectedCategory;
+            isProcessing = true;
             
-            if (!category) {
-                alert('⚠️ Per favore, seleziona una cartella o inserisci un nome personalizzato');
-                return;
+            // Disabilita il bottone per prevenire click multipli
+            const generateButton = document.querySelector('button[onclick="startProcessing()"]');
+            if (generateButton) {
+                generateButton.disabled = true;
+                generateButton.style.opacity = '0.6';
+                generateButton.style.cursor = 'not-allowed';
             }
+            
+            try {
+                const urlInput = document.getElementById('youtubeUrl');
+                const url = urlInput.value.trim();
+                
+                if (!url) {
+                    alert('⚠️ Per favore, inserisci un URL YouTube valido');
+                    return;
+                }
 
-            // Nascondi sezione categoria e mostra sezione progresso
-            document.getElementById('categorySelection').classList.add('hidden');
-            document.getElementById('progressSection').classList.remove('hidden');
-            document.getElementById('resultSection').classList.add('hidden');
+                const videoId = validateYouTubeUrl(url);
+                if (!videoId) {
+                    alert('⚠️ URL YouTube non valido. Assicurati che sia nel formato corretto.\n\nEsempio: https://www.youtube.com/watch?v=dQw4w9WgXcQ');
+                    return;
+                }
+
+                // Ottieni la categoria selezionata
+                const selectedCategory = document.getElementById('categorySelect').value;
+                const customCategory = document.getElementById('categoryCustom').value.trim();
+                const category = customCategory || selectedCategory;
+                
+                if (!category) {
+                    alert('⚠️ Per favore, seleziona una cartella o inserisci un nome personalizzato');
+                    return;
+                }
+
+                // Nascondi sezione categoria e mostra sezione progresso
+                document.getElementById('categorySelection').classList.add('hidden');
+                document.getElementById('progressSection').classList.remove('hidden');
+                document.getElementById('resultSection').classList.add('hidden');
 
             try {
                 // Step 1: Estrazione trascrizione
@@ -2375,7 +2393,7 @@ Lo sviluppo responsabile dell'AI richiede attenzione a:
                     }
                 }
                 
-                console.log('=== FINE DEBUG ESTRAZIONE CONTENUTO PER SHEET ===');
+                // Estrazione contenuto completata (log disabilitato)
                 
                 await sendEmail(driveResult.docUrl, url, abstract, videoData.title);
                 
@@ -2393,20 +2411,40 @@ Lo sviluppo responsabile dell'AI richiede attenzione a:
                     abstract: abstract
                 });
                 
-                console.log('✅ Dati inviati a Google Sheets');
+                // Dati inviati a Google Sheets (log disabilitato)
                 
                 updateProgress(100, 4, '✅ Processo completato!');
                 await new Promise(resolve => setTimeout(resolve, 1000));
                 
                 // Mostra risultati
                 showResults(videoData.title, driveResult.docUrl, category, abstract);
+                
+                // Ripristina flag e bottone al completamento
+                isProcessing = false;
+                const generateButton = document.querySelector('button[onclick="startProcessing()"]');
+                if (generateButton) {
+                    generateButton.disabled = false;
+                    generateButton.style.opacity = '1';
+                    generateButton.style.cursor = 'pointer';
+                }
 
             } catch (error) {
-                console.error('Errore durante l\'elaborazione:', error);
+                if (!isProduction) {
+                    originalConsole.error('Errore durante l\'elaborazione:', error);
+                }
                 const errorMessage = error.message || 'Errore durante l\'elaborazione. Riprova più tardi.';
                 
                 // Reset progress bar
                 updateProgress(0, 1, '');
+                
+                // Ripristina flag e bottone in caso di errore
+                isProcessing = false;
+                const generateButton = document.querySelector('button[onclick="startProcessing()"]');
+                if (generateButton) {
+                    generateButton.disabled = false;
+                    generateButton.style.opacity = '1';
+                    generateButton.style.cursor = 'pointer';
+                }
                 
                 // Gestione errori specifici
                 if (errorMessage.includes('Autenticazione Google') || errorMessage.includes('autenticazione')) {
