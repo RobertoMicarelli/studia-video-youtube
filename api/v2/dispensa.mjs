@@ -14,7 +14,12 @@
  * Nessuna API key esce mai dal backend.
  */
 
-import { selectKind, buildSegmentPrompt, buildAbstractPrompt } from '../../lib/prompts.mjs';
+import {
+  selectKind,
+  buildSegmentPrompt,
+  buildAbstractPrompt,
+  buildClosingPrompt
+} from '../../lib/prompts.mjs';
 
 // maxDuration e' dichiarato in vercel.json (functions: "api/v2/*.mjs")
 
@@ -206,6 +211,32 @@ export default async function handler(req, res) {
       });
     }
 
+    // ---------------- closing ----------------
+    if (mode === 'closing') {
+      if (!outline.trim()) {
+        return res.status(400).json({ error: 'outline richiesto per mode=closing' });
+      }
+      const model = process.env.OPENAI_MODEL_V2 || 'gpt-5.4-mini';
+      const { text, usage } = await callOpenAI({
+        apiKey,
+        deadline,
+        body: buildBody({
+          model,
+          system: 'Sei un redattore didattico. Rispondi solo con le sezioni richieste.',
+          prompt: buildClosingPrompt({ kind, meta, corpo: outline.slice(0, 40000) }),
+          maxTokens: 2500,
+          temperature
+        })
+      });
+      return res.status(200).json({
+        success: true,
+        mode: 'closing',
+        kind,
+        text: text.trim(),
+        usage
+      });
+    }
+
     // ---------------- section ----------------
     if (!transcript.trim()) {
       return res.status(400).json({ error: 'transcript richiesto per mode=section' });
@@ -224,7 +255,9 @@ export default async function handler(req, res) {
     // consumano l'intero budget in ragionamento e restituiscono contenuto VUOTO.
     // Misura sempre reasoning_tokens prima di adottare un modello qui.
     const model = process.env.OPENAI_MODEL_V2 || 'gpt-5.4-mini';
-    const maxTokens = parseInt(process.env.OPENAI_MAX_TOKENS_SECTION || '4000', 10);
+    // 5500 token a ~157 tok/s = ~35s, dentro il budget di 52s.
+    // Con 4000 i segmenti venivano troncati sistematicamente (misurato 2/2).
+    const maxTokens = parseInt(process.env.OPENAI_MAX_TOKENS_SECTION || '5500', 10);
 
     const { text, finishReason, usage } = await callOpenAI({
       apiKey,

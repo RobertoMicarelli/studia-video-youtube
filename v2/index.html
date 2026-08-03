@@ -453,7 +453,9 @@ footer { margin-top: 3rem; padding-top: 1.5rem; border-top: 1px solid var(--line
 const $ = (id) => document.getElementById(id);
 
 const CFG = {
-  chunkChars: 12000,   // dimensione di un segmento di trascrizione
+  // 9000 e non 12000: con segmenti più grandi il modello satura il tetto di token
+  // e viene troncato a metà frase (misurato 2/2 su un video di 19 minuti).
+  chunkChars: 9000,
   concurrency: 2,      // segmenti elaborati in parallelo
   email: 'roberto.micarelli@gmail.com'
 };
@@ -815,8 +817,10 @@ async function run() {
       notice('progNotice', 'warn', 'Un segmento ha raggiunto il limite di lunghezza: la dispensa potrebbe risultare tagliata in un punto.');
     }
 
-    /* 3 — abstract dal backend (niente più regex a caccia nell'output) */
-    setProgress(63, 2, 'Elaborazione AI', 'Sintesi dell\'abstract…');
+    /* 3 — abstract e sezioni conclusive, entrambi dal backend.
+           Niente più regex a caccia nell'output, e le sezioni finali non
+           possono più essere perse per troncamento dell'ultimo segmento. */
+    setProgress(60, 2, 'Elaborazione AI', 'Sintesi dell\'abstract e delle conclusioni…');
     let abstract = '';
     if (n === 1) {
       // segmento unico: il documento è già completo di metadati e abstract,
@@ -828,8 +832,12 @@ async function run() {
     } else {
       const outline = body.split('\n').filter((l) => /^#{1,3}\s|^\d+[.)]\s/.test(l)).join('\n')
         || body.slice(0, 8000);
-      const a = await postJSON('/api/v2/dispensa',
-        { mode: 'abstract', category, meta, outline }, signal);
+
+      // In parallelo: l'abstract lavora sull'indice, le conclusioni sul corpo
+      const [a, c] = await Promise.all([
+        postJSON('/api/v2/dispensa', { mode: 'abstract', category, meta, outline }, signal),
+        postJSON('/api/v2/dispensa', { mode: 'closing', category, meta, outline: body }, signal)
+      ]);
       abstract = a.text;
       lastDoc = [
         'METADATI DEL VIDEO',
@@ -844,7 +852,9 @@ async function run() {
         '',
         abstract,
         '',
-        body
+        body,
+        '',
+        c.text
       ].join('\n');
     }
 
