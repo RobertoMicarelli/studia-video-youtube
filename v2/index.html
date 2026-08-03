@@ -482,6 +482,10 @@ async function sha256(str) {
   return [...new Uint8Array(buf)].map((b) => b.toString(16).padStart(2, '0')).join('');
 }
 
+/* Dichiarato qui, prima di openApp() che lo legge: a runtime l'ordine attuale
+   reggerebbe comunque, ma dipendere dall'ordine di esecuzione e' fragile. */
+let googleToken = null;
+
 function openApp() {
   $('gate').classList.add('hidden');
   $('app').classList.remove('hidden');
@@ -509,8 +513,6 @@ $('logoutBtn').addEventListener('click', () => {
 });
 
 /* ── token Google ─────────────────────────────────────────────── */
-let googleToken = null;
-
 const store = {
   get t()  { try { return localStorage.getItem('g.token'); } catch { return null; } },
   get exp(){ try { return parseInt(localStorage.getItem('g.exp') || '0', 10); } catch { return 0; } },
@@ -586,7 +588,8 @@ function renderGoogle() {
 
 async function startGoogleAuth() {
   try {
-    const r = await fetch('/api/auth?action=auth-url');
+    // returnTo: senza questo il callback OAuth rimanda su "/", cioè sulla v1
+    const r = await fetch('/api/auth?action=auth-url&returnTo=%2Fv2');
     if (!r.ok) throw new Error();
     location.href = (await r.json()).authUrl;
   } catch {
@@ -637,6 +640,8 @@ function setProgress(pct, step, phase, msg) {
   }
 }
 
+const stopTicker = () => { if (ticker) { clearInterval(ticker); ticker = null; } };
+
 function startTicker() {
   startedAt = Date.now();
   stopTicker();
@@ -645,7 +650,6 @@ function startTicker() {
     $('progTime').textContent = `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`;
   }, 1000);
 }
-const stopTicker = () => { if (ticker) { clearInterval(ticker); ticker = null; } };
 
 /* ── utilità ──────────────────────────────────────────────────── */
 function videoIdFrom(url) {

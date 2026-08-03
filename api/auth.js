@@ -3,6 +3,17 @@
  * Genera URL di autorizzazione e gestisce il callback
  */
 
+/**
+ * Pagine su cui e' lecito rimandare l'utente dopo il login Google.
+ *
+ * Allowlist chiusa, non una validazione "sembra un path relativo": il valore
+ * torna dal redirect di Google e, senza vincoli, sarebbe un open redirect.
+ */
+const RETURN_TO_CONSENTITI = ['/', '/v2'];
+
+const returnToSicuro = (valore) =>
+  RETURN_TO_CONSENTITI.includes(valore) ? valore : '/';
+
 export default async function handler(req, res) {
   const { method, query } = req;
 
@@ -36,13 +47,19 @@ export default async function handler(req, res) {
       'https://www.googleapis.com/auth/spreadsheets'
     ].join(' ');
 
+    // `state` viaggia fino a Google e torna intatto nel callback: lo usiamo per
+    // sapere su quale pagina rimandare l'utente. Il redirect_uri resta invariato,
+    // quindi non serve toccare nulla in Google Cloud Console.
+    const state = returnToSicuro(query.returnTo);
+
     const authUrl = `https://accounts.google.com/o/oauth2/v2/auth?` +
       `client_id=${clientId}&` +
       `redirect_uri=${encodeURIComponent(redirectUri)}&` +
       `response_type=code&` +
       `scope=${encodeURIComponent(scopes)}&` +
       `access_type=offline&` +
-      `prompt=consent`;
+      `prompt=consent&` +
+      `state=${encodeURIComponent(state)}`;
 
     return res.status(200).json({ authUrl });
   }
@@ -135,7 +152,11 @@ export default async function handler(req, res) {
         ...(tokenData.refresh_token && { refresh_token: tokenData.refresh_token })
       });
       
-      return res.redirect(`/?${tokenParams.toString()}`);
+      // Torna alla pagina da cui e' partito il login (v1 su "/", 2.0 su "/v2").
+      // Senza `state` il default resta "/", quindi la v1 non cambia comportamento.
+      const destinazione = returnToSicuro(query.state);
+
+      return res.redirect(`${destinazione}?${tokenParams.toString()}`);
 
     } catch (error) {
       console.error('Errore OAuth callback:', error);

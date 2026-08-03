@@ -2206,11 +2206,15 @@ Lo sviluppo responsabile dell'AI richiede attenzione a:
                     }, 5000); // Aumentato a 5 secondi per Chrome
                 }
                 
+                // Dichiarata FUORI dal try: il commit 6f9eacd l'aveva racchiusa nel
+                // blocco try/finally rendendola block-scoped, ma viene usata piu' sotto
+                // (saveToGoogleDrive, estrazione abstract) -> "dispensa is not defined".
+                let dispensa;
                 try {
-                    const dispensa = await processWithOpenAI(
-                        videoData.transcript, 
-                        videoData.title, 
-                        url, 
+                    dispensa = await processWithOpenAI(
+                        videoData.transcript,
+                        videoData.title,
+                        url,
                         videoData.author,
                         videoData.temiTrattati,
                         category
