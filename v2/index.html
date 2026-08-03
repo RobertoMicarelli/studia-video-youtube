@@ -1,0 +1,936 @@
+<!DOCTYPE html>
+<html lang="it" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="color-scheme" content="dark light">
+<meta name="description" content="Trasforma un video YouTube in una dispensa di studio professionale.">
+<meta name="robots" content="noindex, nofollow">
+<title>Trascrittino 2.0</title>
+
+<link rel="icon" href="./assets/logo-256.png" type="image/png">
+<link rel="preload" as="image" href="./assets/logo-256.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Syne:wght@700;800&display=swap">
+
+<style>
+/* ══════════════════════════════════════════════════════════════════
+   TRASCRITTINO 2.0 — design system AI-utati
+   Arancione #F3832C = umano · Teal #0094B5 = AI
+   Il brand vive negli accenti; il testo vive sui neutri.
+   Nessun framework CSS, nessun JS di terze parti.
+   ══════════════════════════════════════════════════════════════════ */
+
+:root {
+  /* brand */
+  --human:        #F3832C;
+  --human-soft:   #FFB067;
+  --ai:           #0094B5;
+  --ai-soft:      #3FC2E0;
+  --ok:           #22C79A;
+  --warn:         #F0B429;
+  --err:          #F2555A;
+
+  /* superfici e testo (dark) */
+  --bg:           #0C0F14;
+  --bg-elev:      #12161D;
+  --surface:      #161B24;
+  --surface-2:    #1D2430;
+  --line:         #262E3B;
+  --line-strong:  #38424F;
+  --text:         #E9EDF3;
+  --text-2:       #A7B2C0;
+  --text-3:       #6F7C8C;
+
+  /* forma */
+  --r-sm: 8px;  --r-md: 12px;  --r-lg: 18px;  --r-xl: 26px;
+  --shadow: 0 1px 2px rgba(0,0,0,.4), 0 12px 32px -12px rgba(0,0,0,.6);
+  --ring: 0 0 0 3px color-mix(in srgb, var(--ai) 35%, transparent);
+  --maxw: 68rem;
+
+  --step--1: clamp(.78rem, .76rem + .1vw, .84rem);
+  --step-0:  clamp(.94rem, .91rem + .15vw, 1rem);
+  --step-1:  clamp(1.1rem, 1.03rem + .35vw, 1.3rem);
+  --step-2:  clamp(1.35rem, 1.2rem + .7vw, 1.75rem);
+  --step-3:  clamp(2rem, 1.6rem + 2vw, 3.1rem);
+}
+
+:root[data-theme="light"] {
+  --bg:           #F7F8FA;
+  --bg-elev:      #FFFFFF;
+  --surface:      #FFFFFF;
+  --surface-2:    #F1F3F7;
+  --line:         #E1E5EC;
+  --line-strong:  #C8D0DA;
+  --text:         #131820;
+  --text-2:       #4B5766;
+  --text-3:       #7C8797;
+  --human:        #C25C09;   /* scurito per reggere il contrasto su fondo chiaro */
+  --ai:           #00728C;
+  --shadow: 0 1px 2px rgba(16,24,40,.06), 0 12px 28px -14px rgba(16,24,40,.22);
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+
+html { -webkit-text-size-adjust: 100%; }
+
+body {
+  margin: 0;
+  min-height: 100dvh;
+  font-family: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  font-size: var(--step-0);
+  line-height: 1.6;
+  color: var(--text);
+  background: var(--bg);
+  -webkit-font-smoothing: antialiased;
+}
+
+/* alone di brand, statico: niente backdrop-filter, niente blur animati
+   (era la causa dei rallentamenti su Chrome/macOS nella v1) */
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  background:
+    radial-gradient(60rem 30rem at 15% -10%, color-mix(in srgb, var(--human) 12%, transparent), transparent 70%),
+    radial-gradient(52rem 28rem at 90% 0%, color-mix(in srgb, var(--ai) 14%, transparent), transparent 70%);
+}
+
+h1,h2,h3,h4 { margin: 0; line-height: 1.2; font-weight: 700; letter-spacing: -.015em; }
+p { margin: 0; }
+
+a { color: var(--ai-soft); text-underline-offset: .2em; }
+:root[data-theme="light"] a { color: var(--ai); }
+
+:where(a, button, input, select, textarea, [tabindex]):focus-visible {
+  outline: 2px solid var(--ai-soft);
+  outline-offset: 2px;
+  border-radius: var(--r-sm);
+}
+
+.shell { position: relative; z-index: 1; max-width: var(--maxw); margin-inline: auto; padding: clamp(1rem, 3vw, 2.5rem); }
+
+/* ── card ─────────────────────────────────────────────────────── */
+.card {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--r-xl);
+  box-shadow: var(--shadow);
+}
+
+/* ── header ───────────────────────────────────────────────────── */
+/* stretto: logo e pulsanti sulla stessa riga, testo sotto
+   largo: tutto su una riga sola */
+.masthead {
+  display: grid; gap: .75rem 1rem; align-items: center; margin-bottom: 2rem;
+  grid-template-columns: auto 1fr;
+  grid-template-areas: "logo actions" "text text";
+}
+@media (min-width: 44rem) {
+  .masthead { grid-template-columns: auto 1fr auto; grid-template-areas: "logo text actions"; }
+}
+.masthead img { grid-area: logo; width: 64px; height: 64px; object-fit: contain; }
+.masthead-text { grid-area: text; min-width: 0; }
+.masthead-actions { grid-area: actions; justify-self: end; display: flex; gap: .5rem; }
+.wordmark { font-family: Syne, Inter, sans-serif; font-size: var(--step-3); font-weight: 800; letter-spacing: -.03em; line-height: 1.05; color: var(--text); text-wrap: balance; }
+.wordmark span { color: var(--ai); }
+.tagline { color: var(--text-2); font-size: var(--step-0); margin-top: .3rem; max-width: 46ch; }
+
+.badge {
+  display: inline-flex; align-items: center; gap: .4rem;
+  padding: .2rem .6rem; border-radius: 999px;
+  font-size: var(--step--1); font-weight: 600; letter-spacing: .02em;
+  border: 1px solid var(--line-strong); color: var(--text-2); background: var(--surface-2);
+}
+.badge.ok   { color: var(--ok);   border-color: color-mix(in srgb, var(--ok) 40%, transparent);   background: color-mix(in srgb, var(--ok) 12%, transparent); }
+.badge.warn { color: var(--warn); border-color: color-mix(in srgb, var(--warn) 40%, transparent); background: color-mix(in srgb, var(--warn) 12%, transparent); }
+.badge.err  { color: var(--err);  border-color: color-mix(in srgb, var(--err) 40%, transparent);  background: color-mix(in srgb, var(--err) 12%, transparent); }
+
+/* ── controlli ────────────────────────────────────────────────── */
+.field { display: grid; gap: .45rem; }
+.label { font-size: var(--step--1); font-weight: 600; color: var(--text-2); letter-spacing: .04em; text-transform: uppercase; }
+.hint  { font-size: var(--step--1); color: var(--text-3); }
+
+.input, .select {
+  width: 100%;
+  padding: .8rem 1rem;
+  font: inherit;
+  color: var(--text);
+  background: var(--bg-elev);
+  border: 1px solid var(--line-strong);
+  border-radius: var(--r-md);
+  transition: border-color .15s, box-shadow .15s;
+}
+.select { appearance: none; padding-right: 2.5rem;
+  background-image: linear-gradient(45deg, transparent 50%, var(--text-3) 50%), linear-gradient(135deg, var(--text-3) 50%, transparent 50%);
+  background-position: calc(100% - 1.15rem) 1.25rem, calc(100% - .8rem) 1.25rem;
+  background-size: 6px 6px, 6px 6px; background-repeat: no-repeat; }
+.input::placeholder { color: var(--text-3); }
+.input:focus, .select:focus { border-color: var(--ai); box-shadow: var(--ring); outline: none; }
+.input:disabled, .select:disabled { opacity: .5; cursor: not-allowed; }
+
+.btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: .5rem;
+  padding: .8rem 1.25rem;
+  font: inherit; font-weight: 600;
+  border: 1px solid transparent; border-radius: var(--r-md);
+  cursor: pointer;
+  transition: transform .12s, filter .15s, background-color .15s, border-color .15s;
+}
+.btn:active:not(:disabled) { transform: translateY(1px); }
+.btn:disabled { opacity: .45; cursor: not-allowed; }
+.btn-primary { background: linear-gradient(100deg, var(--human), #E4650F); color: #fff; box-shadow: 0 6px 18px -8px color-mix(in srgb, var(--human) 80%, transparent); }
+.btn-primary:hover:not(:disabled) { filter: brightness(1.07); }
+.btn-ai      { background: var(--ai); color: #fff; }
+.btn-ai:hover:not(:disabled) { filter: brightness(1.1); }
+.btn-ghost   { background: var(--surface-2); color: var(--text); border-color: var(--line-strong); }
+.btn-ghost:hover:not(:disabled) { border-color: var(--text-3); }
+.btn-icon    { padding: .55rem .7rem; background: var(--surface-2); border-color: var(--line-strong); color: var(--text-2); }
+.btn-block   { width: 100%; }
+
+/* ── layout fluido: niente colonne fisse, si adatta da solo ───── */
+.grid { display: grid; gap: 1rem; grid-template-columns: repeat(auto-fit, minmax(15rem, 1fr)); }
+.row  { display: flex; gap: .75rem; flex-wrap: wrap; align-items: center; }
+
+/* ── avviso / errore inline (al posto di alert()) ─────────────── */
+.notice {
+  display: flex; gap: .75rem; align-items: flex-start;
+  padding: .85rem 1rem; border-radius: var(--r-md);
+  border: 1px solid var(--line-strong); background: var(--surface-2);
+  font-size: var(--step--1); color: var(--text-2);
+}
+.notice strong { color: var(--text); font-weight: 600; }
+.notice.err  { border-color: color-mix(in srgb, var(--err) 45%, transparent);  background: color-mix(in srgb, var(--err) 10%, transparent); }
+.notice.warn { border-color: color-mix(in srgb, var(--warn) 45%, transparent); background: color-mix(in srgb, var(--warn) 10%, transparent); }
+.notice.ok   { border-color: color-mix(in srgb, var(--ok) 45%, transparent);   background: color-mix(in srgb, var(--ok) 10%, transparent); }
+.notice .ico { font-size: 1.1rem; line-height: 1.3; flex: none; }
+
+/* ── progresso ────────────────────────────────────────────────── */
+.track { height: .5rem; border-radius: 999px; background: var(--surface-2); overflow: hidden; }
+.fill  { height: 100%; width: 0%; border-radius: 999px;
+         background: linear-gradient(90deg, var(--human), var(--ai));
+         transition: width .35s cubic-bezier(.4,0,.2,1); }
+
+.steps { display: grid; gap: .5rem; grid-template-columns: repeat(auto-fit, minmax(9rem, 1fr)); margin-top: 1.25rem; }
+.step  { display: flex; gap: .6rem; align-items: center; padding: .6rem .75rem;
+         border: 1px solid var(--line); border-radius: var(--r-md); background: var(--bg-elev);
+         font-size: var(--step--1); color: var(--text-3); transition: border-color .2s, color .2s; }
+.step .dot { width: 1.55rem; height: 1.55rem; flex: none; border-radius: 50%;
+             display: grid; place-items: center; font-size: .8rem;
+             background: var(--surface-2); color: var(--text-3); transition: background-color .2s, color .2s; }
+.step[data-state="active"] { border-color: var(--ai); color: var(--text); }
+.step[data-state="active"] .dot { background: var(--ai); color: #fff; animation: breathe 1.8s ease-in-out infinite; }
+.step[data-state="done"] { color: var(--text-2); }
+.step[data-state="done"] .dot { background: var(--ok); color: #05231A; }
+
+@keyframes breathe { 0%,100% { opacity: 1 } 50% { opacity: .55 } }
+
+.meter { font-variant-numeric: tabular-nums; }
+
+/* ── risultato ────────────────────────────────────────────────── */
+.result { border-left: 3px solid var(--ok); }
+.kv { display: grid; grid-template-columns: auto 1fr; gap: .4rem 1rem; font-size: var(--step--1); align-items: baseline; }
+.kv dt { color: var(--text-3); white-space: nowrap; }
+.kv dd { margin: 0; color: var(--text); min-width: 0; overflow-wrap: anywhere; }
+
+/* ── info ─────────────────────────────────────────────────────── */
+.tile { padding: 1.1rem; border: 1px solid var(--line); border-radius: var(--r-lg); background: var(--surface); }
+.tile h3 { font-size: var(--step-0); margin-bottom: .35rem; }
+.tile p  { font-size: var(--step--1); color: var(--text-2); }
+.tile .ico { font-size: 1.35rem; display: block; margin-bottom: .5rem; }
+
+ol.how { list-style: none; margin: 0; padding: 0; display: grid; gap: .85rem; grid-template-columns: repeat(auto-fit, minmax(13rem, 1fr)); counter-reset: s; }
+ol.how li { counter-increment: s; display: grid; grid-template-columns: auto 1fr; gap: .7rem; align-items: start; }
+ol.how li::before {
+  content: counter(s);
+  width: 1.7rem; height: 1.7rem; border-radius: 50%;
+  display: grid; place-items: center;
+  font-size: .8rem; font-weight: 700; color: #fff;
+  background: var(--ai); /* solido: a 1.7rem un gradiente due-toni legge come marrone */
+}
+ol.how h4 { font-size: var(--step--1); margin-bottom: .1rem; }
+ol.how p  { font-size: var(--step--1); color: var(--text-2); }
+
+footer { margin-top: 3rem; padding-top: 1.5rem; border-top: 1px solid var(--line);
+         color: var(--text-3); font-size: var(--step--1); text-align: center; }
+
+/* ── gate di accesso ──────────────────────────────────────────── */
+.gate { position: fixed; inset: 0; z-index: 50; display: grid; place-items: center; padding: 1.25rem;
+        background: var(--bg); }
+.gate::before { content: ""; position: absolute; inset: 0;
+  background: radial-gradient(40rem 24rem at 50% 0%, color-mix(in srgb, var(--ai) 16%, transparent), transparent 70%); }
+.gate .card { position: relative; width: min(26rem, 100%); padding: clamp(1.5rem, 4vw, 2.25rem); }
+
+.hidden { display: none !important; }
+.sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
+.stack   { display: grid; gap: 1.25rem; }
+.stack-s { display: grid; gap: .75rem; }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; }
+}
+</style>
+</head>
+<body>
+
+<!-- ══ ACCESSO ══════════════════════════════════════════════════ -->
+<div class="gate" id="gate">
+  <div class="card">
+    <div style="text-align:center; margin-bottom:1.5rem">
+      <img src="./assets/logo-256.png" alt="" width="72" height="72" style="object-fit:contain">
+      <h1 class="wordmark" style="font-size:var(--step-2); margin-top:.5rem">Trascrittino <span>2.0</span></h1>
+      <p class="tagline" style="margin-inline:auto">Area riservata</p>
+    </div>
+    <form id="gateForm" class="stack-s" autocomplete="on">
+      <div class="field">
+        <label class="label" for="gu">Username</label>
+        <input class="input" id="gu" name="username" autocomplete="username" required>
+      </div>
+      <div class="field">
+        <label class="label" for="gp">Password</label>
+        <input class="input" id="gp" name="password" type="password" autocomplete="current-password" required>
+      </div>
+      <div id="gateErr" class="notice err hidden"><span class="ico">⛔</span><span>Credenziali non valide.</span></div>
+      <button class="btn btn-primary btn-block" type="submit">Entra</button>
+    </form>
+  </div>
+</div>
+
+<!-- ══ APP ══════════════════════════════════════════════════════ -->
+<div class="shell hidden" id="app">
+
+  <header class="masthead">
+    <img src="./assets/logo-256.png" alt="" width="64" height="64">
+    <div class="masthead-text">
+      <div class="wordmark">Trascrittino <span>2.0</span></div>
+      <p class="tagline">Da un video YouTube a una dispensa di studio, dentro il tuo Drive.</p>
+    </div>
+    <div class="masthead-actions">
+      <button class="btn btn-icon" id="themeBtn" type="button" title="Cambia tema" aria-label="Cambia tema">◐</button>
+      <button class="btn btn-icon" id="logoutBtn" type="button" title="Esci" aria-label="Esci">⏻</button>
+    </div>
+  </header>
+
+  <!-- Google -->
+  <div class="card" style="padding:1rem 1.25rem; margin-bottom:1.25rem">
+    <div class="row" style="justify-content:space-between">
+      <div class="row" style="gap:.6rem">
+        <span id="gIcon" aria-hidden="true">🔐</span>
+        <span id="gText" style="font-size:var(--step--1); color:var(--text-2)">Verifica accesso Google…</span>
+      </div>
+      <button class="btn btn-ai" id="gBtn" type="button">Accedi con Google</button>
+    </div>
+  </div>
+
+  <!-- FORM -->
+  <section class="card" id="formCard" style="padding:clamp(1.25rem, 3vw, 2rem)">
+    <div class="stack">
+      <div class="field">
+        <label class="label" for="url">Link del video YouTube</label>
+        <input class="input" id="url" type="url" inputmode="url" spellcheck="false"
+               placeholder="https://www.youtube.com/watch?v=…">
+        <p class="hint">Durata massima 4 ore. I video senza sottotitoli non possono essere trascritti.</p>
+      </div>
+
+      <div class="grid">
+        <div class="field">
+          <label class="label" for="cat">Cartella di destinazione</label>
+          <select class="select" id="cat">
+            <option>STUDIO AI</option>
+            <option selected>FORMAZIONE</option>
+            <option>INTERVISTE</option>
+            <option>APPLICAZIONI</option>
+            <option>FILOSOFIA</option>
+            <option>COACHING</option>
+            <option>VARIE</option>
+          </select>
+        </div>
+        <div class="field">
+          <label class="label" for="catCustom">Oppure nuova cartella</label>
+          <input class="input" id="catCustom" placeholder="es. NEUROSCIENZE" style="text-transform:uppercase">
+          <p class="hint">La cartella decide anche il taglio della dispensa.</p>
+        </div>
+      </div>
+
+      <div id="formNotice" class="notice err hidden" role="alert"><span class="ico">⛔</span><span id="formNoticeText"></span></div>
+
+      <button class="btn btn-primary btn-block" id="goBtn" type="button">Genera dispensa</button>
+    </div>
+  </section>
+
+  <!-- PROGRESSO -->
+  <section class="card hidden" id="progCard" style="padding:clamp(1.25rem, 3vw, 2rem); margin-top:1.25rem">
+    <div class="stack-s">
+      <div class="row" style="justify-content:space-between">
+        <span class="label" id="progPhase">Avvio</span>
+        <span class="row" style="gap:.75rem">
+          <span class="meter" id="progTime" style="font-size:var(--step--1); color:var(--text-3)">0:00</span>
+          <span class="meter" id="progPct" style="font-weight:700; color:var(--ai)">0%</span>
+        </span>
+      </div>
+      <div class="track"><div class="fill" id="progFill" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"></div></div>
+
+      <div class="steps" id="steps">
+        <div class="step" data-step="1"><span class="dot">1</span><span>Trascrizione</span></div>
+        <div class="step" data-step="2"><span class="dot">2</span><span>Elaborazione AI</span></div>
+        <div class="step" data-step="3"><span class="dot">3</span><span>Drive</span></div>
+        <div class="step" data-step="4"><span class="dot">4</span><span>Notifica</span></div>
+      </div>
+
+      <p id="progMsg" aria-live="polite" style="font-size:var(--step--1); color:var(--text-2); margin-top:.25rem">In attesa…</p>
+      <div id="progNotice" class="notice hidden"></div>
+
+      <div class="row" style="justify-content:flex-end">
+        <button class="btn btn-ghost" id="cancelBtn" type="button">Annulla</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- RISULTATO -->
+  <section class="card result hidden" id="resCard" style="padding:clamp(1.25rem, 3vw, 2rem); margin-top:1.25rem">
+    <div class="stack-s">
+      <h2 style="font-size:var(--step-1)">✅ Dispensa pronta</h2>
+      <p id="resAbstract" style="color:var(--text-2); font-size:var(--step--1)"></p>
+      <dl class="kv">
+        <dt>Documento</dt><dd><a id="resLink" href="#" target="_blank" rel="noopener">Apri su Google Drive</a></dd>
+        <dt>Cartella</dt><dd id="resFolder">—</dd>
+        <dt>Fonte testo</dt><dd id="resSource">—</dd>
+        <dt>Email</dt><dd id="resMail">—</dd>
+        <dt>Registro</dt><dd id="resSheet">—</dd>
+      </dl>
+      <div class="row">
+        <button class="btn btn-primary" id="againBtn" type="button">Elabora un altro video</button>
+        <button class="btn btn-ghost" id="copyBtn" type="button">Copia dispensa</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- INFO -->
+  <div class="grid" style="margin-top:2rem">
+    <div class="tile"><span class="ico">🎯</span><h3>Struttura didattica</h3><p>Metadati, abstract, sezioni tematiche, punti chiave e applicazioni pratiche.</p></div>
+    <div class="tile"><span class="ico">🗂️</span><h3>Archivio ordinato</h3><p>Ogni dispensa finisce nella cartella Drive giusta, con il taglio adatto al tipo di video.</p></div>
+    <div class="tile"><span class="ico">📊</span><h3>Tracciamento</h3><p>Email di notifica e riga nel registro Google Sheets a ogni elaborazione.</p></div>
+  </div>
+
+  <section class="card" style="padding:clamp(1.25rem, 3vw, 1.75rem); margin-top:1.25rem">
+    <h2 style="font-size:var(--step-1); margin-bottom:1rem">Come funziona</h2>
+    <ol class="how">
+      <li><div><h4>Incolla il link</h4><p>URL del video che vuoi studiare.</p></div></li>
+      <li><div><h4>Estrazione</h4><p>Vengono scaricati i sottotitoli reali del video.</p></div></li>
+      <li><div><h4>Dispensa</h4><p>L'AI riorganizza il contenuto in materiale di studio.</p></div></li>
+      <li><div><h4>Archiviazione</h4><p>Salvataggio su Drive, email e registro.</p></div></li>
+    </ol>
+  </section>
+
+  <footer>
+    <p>APP realizzata da <strong style="color:var(--text-2)">Roberto Micarelli</strong></p>
+    <p style="margin-top:.35rem">
+      <a href="https://www.ai-utati.it" target="_blank" rel="noopener">ai-utati.it</a>
+      <span style="color:var(--text-3)"> · </span>
+      <a href="mailto:roberto@ai-utati.it">roberto@ai-utati.it</a>
+    </p>
+  </footer>
+</div>
+
+<script type="module">
+'use strict';
+
+/* ═══════════════════════════════════════════════════════════════
+   TRASCRITTINO 2.0 — logica applicativa
+
+   Differenze sostanziali rispetto alla v1:
+   · i prompt vivono sul server (il client non ne scarica piu' 600 righe)
+   · la trascrizione viene spezzata in segmenti: nessuna chiamata supera
+     il budget di 60s della funzione serverless, quindi niente 504
+   · l'abstract lo produce il backend: eliminate ~250 righe di regex
+   · un solo stato di elaborazione, sempre rilasciato in finally
+   · nessun alert() bloccante, nessun setInterval sui messaggi
+   ═══════════════════════════════════════════════════════════════ */
+
+const $ = (id) => document.getElementById(id);
+
+const CFG = {
+  chunkChars: 12000,   // dimensione di un segmento di trascrizione
+  concurrency: 2,      // segmenti elaborati in parallelo
+  email: 'roberto.micarelli@gmail.com'
+};
+
+/* ── tema ─────────────────────────────────────────────────────── */
+const prefersLight = window.matchMedia('(prefers-color-scheme: light)');
+const applyTheme = (t) => {
+  document.documentElement.dataset.theme = t;
+  try { localStorage.setItem('tsc.theme', t); } catch {}
+};
+applyTheme(localStorage.getItem('tsc.theme') || (prefersLight.matches ? 'light' : 'dark'));
+$('themeBtn').addEventListener('click', () =>
+  applyTheme(document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark'));
+
+/* ── accesso ──────────────────────────────────────────────────────
+   Nota onesta: un gate lato client e' un paravento, non sicurezza.
+   Rispetto alla v1 pero' la password non e' piu' scritta in chiaro nel
+   sorgente pubblico: qui viaggia solo il suo hash SHA-256.
+   Per una protezione vera: Vercel > Settings > Deployment Protection.
+   ──────────────────────────────────────────────────────────────── */
+const CRED_HASH   = '64d76cb1a816588fa6f90b9994f4ba5909cb8b9e03a46062207e21d7a53b10b9';
+const SHARED_HASH = '6aa37d6365cfcdc41fba2332c1ae58749e7bf5f9fb511f10ba1177f88d8160f2';
+
+async function sha256(str) {
+  const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(str));
+  return [...new Uint8Array(buf)].map((b) => b.toString(16).padStart(2, '0')).join('');
+}
+
+function openApp() {
+  $('gate').classList.add('hidden');
+  $('app').classList.remove('hidden');
+  renderGoogle();
+  if (googleToken) loadFolders();
+}
+
+$('gateForm').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const ok = (await sha256(`${$('gu').value.trim()}:${$('gp').value}`)) === CRED_HASH;
+  if (ok) {
+    sessionStorage.setItem('tsc.auth', '1');
+    openApp();
+  } else {
+    $('gateErr').classList.remove('hidden');
+    $('gp').value = '';
+    $('gp').focus();
+    setTimeout(() => $('gateErr').classList.add('hidden'), 3000);
+  }
+});
+
+$('logoutBtn').addEventListener('click', () => {
+  sessionStorage.removeItem('tsc.auth');
+  location.reload();
+});
+
+/* ── token Google ─────────────────────────────────────────────── */
+let googleToken = null;
+
+const store = {
+  get t()  { try { return localStorage.getItem('g.token'); } catch { return null; } },
+  get exp(){ try { return parseInt(localStorage.getItem('g.exp') || '0', 10); } catch { return 0; } },
+  get rt() { try { return localStorage.getItem('g.refresh'); } catch { return null; } },
+  save(token, expiresIn, refresh) {
+    try {
+      localStorage.setItem('g.token', token);
+      localStorage.setItem('g.exp', String(Date.now() + (expiresIn || 3600) * 1000));
+      if (refresh) localStorage.setItem('g.refresh', refresh);
+    } catch {}
+  },
+  clear() {
+    try { ['g.token', 'g.exp', 'g.refresh'].forEach((k) => localStorage.removeItem(k)); } catch {}
+  }
+};
+
+/* Il callback OAuth della v1 rimanda i parametri in querystring: li leggiamo,
+   li salviamo e ripuliamo subito l'URL. */
+(function bootToken() {
+  const q = new URLSearchParams(location.search);
+  if (q.get('token')) {
+    googleToken = q.get('token');
+    store.save(googleToken, parseInt(q.get('expires_in') || '3600', 10), q.get('refresh_token'));
+    history.replaceState({}, '', location.pathname);
+  } else {
+    googleToken = store.t;
+  }
+})();
+
+/** Unica implementazione: la v1 ne aveva due, la prima morta. */
+async function ensureFreshToken() {
+  if (!googleToken || !store.exp) return false;
+  if (Date.now() < store.exp - 5 * 60 * 1000) return true;
+
+  const rt = store.rt;
+  if (!rt) { dropToken(); return false; }
+
+  try {
+    const r = await fetch('/api/auth?action=refresh', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ refresh_token: rt })
+    });
+    if (!r.ok) throw new Error('refresh fallito');
+    const d = await r.json();
+    googleToken = d.access_token;
+    store.save(googleToken, d.expires_in, null);
+    renderGoogle();
+    return true;
+  } catch {
+    dropToken();
+    return false;
+  }
+}
+
+function dropToken() {
+  googleToken = null;
+  store.clear();
+  renderGoogle();
+}
+
+function renderGoogle() {
+  const on = Boolean(googleToken);
+  $('gIcon').textContent = on ? '✅' : '⚠️';
+  $('gText').textContent = on
+    ? 'Connesso a Google Drive, Gmail e Sheets'
+    : 'Serve l\'accesso Google per salvare la dispensa';
+  const b = $('gBtn');
+  b.textContent = on ? 'Disconnetti' : 'Accedi con Google';
+  b.className = on ? 'btn btn-ghost' : 'btn btn-ai';
+  b.onclick = on ? dropToken : startGoogleAuth;
+}
+
+async function startGoogleAuth() {
+  try {
+    const r = await fetch('/api/auth?action=auth-url');
+    if (!r.ok) throw new Error();
+    location.href = (await r.json()).authUrl;
+  } catch {
+    notice('formNotice', 'err', 'Non riesco a generare il link di accesso Google. Controlla GOOGLE_CLIENT_ID e GOOGLE_REDIRECT_URI su Vercel.');
+  }
+}
+
+async function loadFolders() {
+  if (!(await ensureFreshToken())) return;
+  try {
+    const r = await fetch(`/api/folders?accessToken=${encodeURIComponent(googleToken)}`);
+    if (!r.ok) return;
+    const d = await r.json();
+    if (!d.success || !d.folders?.length) return;
+
+    const sel = $('cat');
+    const have = new Set([...sel.options].map((o) => o.value));
+    const extra = d.folders.filter((f) => !have.has(f)).sort((a, b) => a.localeCompare(b));
+    for (const f of extra) sel.add(new Option(f, f));
+  } catch { /* le categorie predefinite bastano */ }
+}
+
+/* ── UI di stato ──────────────────────────────────────────────── */
+function notice(id, kind, html) {
+  const el = $(id);
+  el.className = `notice ${kind}`;
+  el.innerHTML = `<span class="ico">${{ err: '⛔', warn: '⚠️', ok: '✅' }[kind] || 'ℹ️'}</span><span></span>`;
+  el.lastElementChild.textContent = html;
+  el.classList.remove('hidden');
+}
+const clearNotice = (id) => $(id).classList.add('hidden');
+
+let startedAt = 0, ticker = null;
+
+function setProgress(pct, step, phase, msg) {
+  const p = Math.max(0, Math.min(100, Math.round(pct)));
+  const fill = $('progFill');
+  fill.style.width = p + '%';
+  fill.setAttribute('aria-valuenow', String(p));
+  $('progPct').textContent = p + '%';
+  if (phase) $('progPhase').textContent = phase;
+  if (msg) $('progMsg').textContent = msg;
+
+  for (const el of $('steps').children) {
+    const n = Number(el.dataset.step);
+    el.dataset.state = n < step ? 'done' : n === step ? 'active' : '';
+    el.querySelector('.dot').textContent = n < step ? '✓' : String(n);
+  }
+}
+
+function startTicker() {
+  startedAt = Date.now();
+  stopTicker();
+  ticker = setInterval(() => {
+    const s = Math.floor((Date.now() - startedAt) / 1000);
+    $('progTime').textContent = `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`;
+  }, 1000);
+}
+const stopTicker = () => { if (ticker) { clearInterval(ticker); ticker = null; } };
+
+/* ── utilità ──────────────────────────────────────────────────── */
+function videoIdFrom(url) {
+  const m = String(url).trim().match(
+    /(?:youtube\.com\/(?:watch\?(?:.*&)?v=|embed\/|shorts\/|live\/)|youtu\.be\/)([a-zA-Z0-9_-]{11})/
+  );
+  return m ? m[1] : null;
+}
+
+/** Divide sui confini di frase, così un segmento non taglia a metà un concetto. */
+function splitTranscript(text, size) {
+  if (text.length <= size) return [text];
+  const out = [];
+  let buf = '';
+  for (const sentence of text.split(/(?<=[.!?…])\s+/)) {
+    if (buf.length + sentence.length + 1 > size && buf) { out.push(buf.trim()); buf = ''; }
+    // frase più lunga di un intero segmento: taglio forzato
+    if (sentence.length > size) {
+      for (let i = 0; i < sentence.length; i += size) out.push(sentence.slice(i, i + size));
+      continue;
+    }
+    buf += (buf ? ' ' : '') + sentence;
+  }
+  if (buf.trim()) out.push(buf.trim());
+  return out;
+}
+
+/** Esegue i task con parallelismo limitato, preservando l'ordine dei risultati. */
+async function pool(items, limit, worker) {
+  const results = new Array(items.length);
+  let next = 0;
+  await Promise.all(
+    Array.from({ length: Math.min(limit, items.length) }, async () => {
+      while (next < items.length) {
+        const i = next++;
+        results[i] = await worker(items[i], i);
+      }
+    })
+  );
+  return results;
+}
+
+async function postJSON(url, body, signal) {
+  const r = await fetch(url, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
+    signal
+  });
+  const data = await r.json().catch(() => ({}));
+  if (!r.ok) {
+    const e = new Error(data.error || data.message || `${r.status} ${r.statusText}`);
+    e.status = r.status;
+    throw e;
+  }
+  return data;
+}
+
+/* ── pipeline ─────────────────────────────────────────────────── */
+let running = false;
+let aborter = null;
+let lastDoc = '';
+
+const HEADINGS = {
+  standard:   'ABSTRACT',
+  ted:        'Contesto e Obiettivo del Talk',
+  interviste: '[SEZIONE_PRESENTAZIONE]',
+  tutorial:   'METADATA'
+};
+
+$('cancelBtn').addEventListener('click', () => aborter?.abort());
+$('goBtn').addEventListener('click', run);
+$('againBtn').addEventListener('click', reset);
+$('copyBtn').addEventListener('click', async () => {
+  try {
+    await navigator.clipboard.writeText(lastDoc);
+    $('copyBtn').textContent = 'Copiata ✓';
+    setTimeout(() => ($('copyBtn').textContent = 'Copia dispensa'), 1800);
+  } catch { /* clipboard negata */ }
+});
+
+async function run() {
+  if (running) return;                        // niente doppie esecuzioni
+  clearNotice('formNotice');
+
+  const url = $('url').value.trim();
+  const videoId = videoIdFrom(url);
+  if (!videoId) {
+    notice('formNotice', 'err', 'Link YouTube non riconosciuto. Esempio: https://www.youtube.com/watch?v=dQw4w9WgXcQ');
+    $('url').focus();
+    return;
+  }
+  const category = ($('catCustom').value.trim() || $('cat').value).toUpperCase();
+  if (!category) {
+    notice('formNotice', 'err', 'Scegli una cartella di destinazione.');
+    return;
+  }
+  if (!googleToken) {
+    notice('formNotice', 'err', 'Prima accedi con Google: la dispensa va salvata sul tuo Drive.');
+    return;
+  }
+
+  running = true;
+  aborter = new AbortController();
+  const signal = aborter.signal;
+
+  $('goBtn').disabled = true;
+  $('formCard').classList.add('hidden');
+  $('resCard').classList.add('hidden');
+  $('progCard').classList.remove('hidden');
+  clearNotice('progNotice');
+  startTicker();
+
+  // Il finally è la rete di sicurezza che nella v1 mancava: qualunque cosa
+  // succeda (errore, annullamento, uscita anticipata) lo stato viene rilasciato.
+  try {
+    /* 1 — trascrizione */
+    setProgress(5, 1, 'Trascrizione', 'Recupero metadati e sottotitoli…');
+    const video = await postJSON('/api/v2/transcript', { videoId }, signal);
+
+    if (!video.hasRealTranscript) {
+      notice('progNotice', 'warn',
+        'Trascrizione non disponibile: la dispensa verrà costruita sulla sola descrizione del video, quindi sarà molto più povera. '
+        + 'YouTube blocca l\'accesso diretto ai sottotitoli da server; per sbloccarlo serve la variabile SUPADATA_API_KEY su Vercel.');
+    }
+    const src = video.hasRealTranscript
+      ? `sottotitoli ${video.language}${video.autoGenerated ? ' (automatici)' : ''}`
+      : 'descrizione del video';
+
+    const transcript = (video.transcript || '').trim();
+    if (transcript.length < 120) {
+      throw new Error('Il video non espone né sottotitoli né una descrizione utilizzabile.');
+    }
+
+    const meta = {
+      title: video.title,
+      author: video.author,
+      videoUrl: url,
+      temiTrattati: video.temiTrattati
+    };
+
+    /* 2 — elaborazione a segmenti */
+    const chunks = splitTranscript(transcript, CFG.chunkChars);
+    const n = chunks.length;
+    setProgress(15, 2, 'Elaborazione AI',
+      `${(transcript.length / 1000).toFixed(0)}k caratteri · ${n} segment${n === 1 ? 'o' : 'i'} da elaborare`);
+
+    let done = 0;
+    const parts = await pool(chunks, CFG.concurrency, async (chunk, i) => {
+      const r = await postJSON('/api/v2/dispensa',
+        { mode: 'section', category, meta, transcript: chunk, index: i, total: n }, signal);
+      done++;
+      setProgress(15 + (done / n) * 45, 2, 'Elaborazione AI',
+        `Segmento ${done} di ${n} completato`);
+      return r;
+    });
+
+    const kind = parts[0]?.kind || 'standard';
+    const body = parts.map((p) => p.text.trim()).join('\n\n');
+    if (parts.some((p) => p.truncated)) {
+      notice('progNotice', 'warn', 'Un segmento ha raggiunto il limite di lunghezza: la dispensa potrebbe risultare tagliata in un punto.');
+    }
+
+    /* 3 — abstract dal backend (niente più regex a caccia nell'output) */
+    setProgress(63, 2, 'Elaborazione AI', 'Sintesi dell\'abstract…');
+    let abstract = '';
+    if (n === 1) {
+      // segmento unico: il documento è già completo di metadati e abstract,
+      // qui serve solo il testo dell'abstract per email e registro
+      const a = await postJSON('/api/v2/dispensa',
+        { mode: 'abstract', category, meta, outline: body.slice(0, 12000) }, signal);
+      abstract = a.text;
+      lastDoc = body;
+    } else {
+      const outline = body.split('\n').filter((l) => /^#{1,3}\s|^\d+[.)]\s/.test(l)).join('\n')
+        || body.slice(0, 8000);
+      const a = await postJSON('/api/v2/dispensa',
+        { mode: 'abstract', category, meta, outline }, signal);
+      abstract = a.text;
+      lastDoc = [
+        'METADATI DEL VIDEO',
+        '',
+        `Autore: ${meta.author}`,
+        `Titolo: ${meta.title}`,
+        `URL YouTube: ${meta.videoUrl}`,
+        `Temi Trattati: ${meta.temiTrattati || 'Non disponibile'}`,
+        `Data di elaborazione: ${new Date().toLocaleDateString('it-IT')}`,
+        '',
+        HEADINGS[kind] || 'ABSTRACT',
+        '',
+        abstract,
+        '',
+        body
+      ].join('\n');
+    }
+
+    /* 4 — Drive */
+    setProgress(70, 3, 'Salvataggio', `Creazione del documento in "${category}"…`);
+    if (!(await ensureFreshToken())) throw new Error('Sessione Google scaduta: rifai l\'accesso con Google.');
+
+    const drive = await postJSON('/api/drive',
+      { content: lastDoc, title: video.title, category, accessToken: googleToken }, signal);
+
+    /* 5 — email + registro, in parallelo e non bloccanti:
+           se falliscono, la dispensa è comunque salvata */
+    setProgress(88, 4, 'Notifica', 'Invio email e aggiornamento registro…');
+    const [mail, sheet] = await Promise.allSettled([
+      postJSON('/api/gmail',
+        { docUrl: drive.docUrl, videoUrl: url, abstract, fileName: video.title, accessToken: googleToken }, signal),
+      postJSON('/api/sheets',
+        { timestamp: new Date().toISOString(), title: video.title, url, docUrl: drive.docUrl,
+          category, abstract, accessToken: googleToken }, signal)
+    ]);
+
+    setProgress(100, 5, 'Fatto', 'Elaborazione completata');
+    showResult({ drive, category, abstract, src, mail, sheet });
+
+  } catch (err) {
+    if (err.name === 'AbortError') {
+      setProgress(0, 1, 'Annullato', 'Elaborazione interrotta');
+      notice('progNotice', 'warn', 'Elaborazione annullata.');
+    } else {
+      setProgress(0, 1, 'Errore', 'Elaborazione interrotta');
+      notice('progNotice', 'err', err.message || 'Errore imprevisto.');
+    }
+    $('formCard').classList.remove('hidden');
+  } finally {
+    running = false;
+    aborter = null;
+    stopTicker();
+    $('goBtn').disabled = false;
+  }
+}
+
+function showResult({ drive, category, abstract, src, mail, sheet }) {
+  $('progCard').classList.add('hidden');
+  $('resCard').classList.remove('hidden');
+  $('resAbstract').textContent = abstract.length > 320 ? abstract.slice(0, 320) + '…' : abstract;
+  $('resLink').href = drive.docUrl;
+  $('resFolder').textContent = category;
+  $('resSource').textContent = src;
+  const ok = (r) => (r.status === 'fulfilled' ? '✅ ' : '⚠️ non riuscito — ');
+  $('resMail').textContent  = ok(mail)  + (mail.status  === 'fulfilled' ? `inviata a ${CFG.email}` : (mail.reason?.message  || ''));
+  $('resSheet').textContent = ok(sheet) + (sheet.status === 'fulfilled' ? 'registro aggiornato'     : (sheet.reason?.message || ''));
+}
+
+function reset() {
+  $('url').value = '';
+  $('catCustom').value = '';
+  $('resCard').classList.add('hidden');
+  $('progCard').classList.add('hidden');
+  $('formCard').classList.remove('hidden');
+  clearNotice('formNotice');
+  setProgress(0, 1, 'Avvio', 'In attesa…');
+  lastDoc = '';
+  $('url').focus();
+}
+
+$('catCustom').addEventListener('input', (e) => { e.target.value = e.target.value.toUpperCase(); });
+$('url').addEventListener('keydown', (e) => { if (e.key === 'Enter') run(); });
+
+/* ── avvio: autoAuth compatibile con i link generati dalle altre app ── */
+(async function boot() {
+  const q = new URLSearchParams(location.search);
+  const auto = q.get('autoAuth');
+  const preUrl = q.get('videoUrl');
+  const preCat = q.get('category');
+
+  const authed = sessionStorage.getItem('tsc.auth') === '1'
+    || (auto && (await sha256(auto)) === SHARED_HASH);
+
+  if (authed) {
+    sessionStorage.setItem('tsc.auth', '1');
+    openApp();
+    if (preUrl) $('url').value = decodeURIComponent(preUrl);
+    if (preCat) {
+      const c = decodeURIComponent(preCat).toUpperCase();
+      const hit = [...$('cat').options].find((o) => o.value.toUpperCase() === c);
+      if (hit) $('cat').value = hit.value; else $('catCustom').value = c;
+    }
+    if (auto || preUrl || preCat) history.replaceState({}, '', location.pathname);
+  } else {
+    $('gu').focus();
+  }
+})();
+</script>
+</body>
+</html>

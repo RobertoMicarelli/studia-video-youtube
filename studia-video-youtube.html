@@ -2623,6 +2623,19 @@ Lo sviluppo responsabile dell'AI richiede attenzione a:
                     `;
                 }
             }
+            } finally {
+                // Chiude il try aperto a inizio funzione: senza questo blocco l'intero
+                // script non veniva nemmeno parsato (SyntaxError: Missing catch or finally).
+                // Garantisce anche il rilascio del lock sui return anticipati
+                // (URL vuoto, URL non valido, categoria mancante).
+                isProcessing = false;
+                const btn = document.querySelector('button[onclick="startProcessing()"]');
+                if (btn) {
+                    btn.disabled = false;
+                    btn.style.opacity = '1';
+                    btn.style.cursor = 'pointer';
+                }
+            }
         }
 
         function showResults(title, docUrl, category, abstract) {
