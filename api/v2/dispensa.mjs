@@ -104,7 +104,19 @@ async function callOpenAI({ apiKey, body, deadline }) {
       if (res.ok) {
         const data = await res.json();
         const text = data.choices?.[0]?.message?.content;
-        if (!text) throw new Error('Risposta OpenAI vuota');
+
+        if (!text) {
+          // I modelli di reasoning possono consumare l'INTERO budget di token in
+          // ragionamento e restituire contenuto vuoto senza alcun errore HTTP.
+          // Verificato: gpt-5.5 e gpt-5.6-sol lo fanno su questo task.
+          const ragionamento = data.usage?.completion_tokens_details?.reasoning_tokens || 0;
+          throw new Error(
+            ragionamento > 0
+              ? `Il modello "${body.model}" ha speso tutti i ${ragionamento} token disponibili in ragionamento, senza produrre testo. Usa un modello senza reasoning (es. gpt-5.4-mini) impostando OPENAI_MODEL_V2, oppure alza OPENAI_MAX_TOKENS_SECTION.`
+              : 'Risposta OpenAI vuota'
+          );
+        }
+
         return {
           text,
           finishReason: data.choices[0].finish_reason,
@@ -204,7 +216,14 @@ export default async function handler(req, res) {
       });
     }
 
-    const model = process.env.OPENAI_MODEL || 'gpt-4o';
+    // Variabile dedicata alla 2.0: OPENAI_MODEL vale gpt-5.2 ed e' condivisa con la
+    // v1, ma su questo task gpt-5.2 sta a ~61 tok/s e sfonda il budget di 60s.
+    //
+    // gpt-5.4-mini misurato a ~157 tok/s, 2,6x piu' veloce, senza token di
+    // ragionamento. ATTENZIONE prima di cambiarlo: gpt-5.5 e gpt-5.6-sol
+    // consumano l'intero budget in ragionamento e restituiscono contenuto VUOTO.
+    // Misura sempre reasoning_tokens prima di adottare un modello qui.
+    const model = process.env.OPENAI_MODEL_V2 || 'gpt-5.4-mini';
     const maxTokens = parseInt(process.env.OPENAI_MAX_TOKENS_SECTION || '4000', 10);
 
     const { text, finishReason, usage } = await callOpenAI({
