@@ -453,9 +453,10 @@ footer { margin-top: 3rem; padding-top: 1.5rem; border-top: 1px solid var(--line
 const $ = (id) => document.getElementById(id);
 
 const CFG = {
-  // 9000 e non 12000: con segmenti più grandi il modello satura il tetto di token
-  // e viene troncato a metà frase (misurato 2/2 su un video di 19 minuti).
-  chunkChars: 9000,
+  // Dimensione tarata sul troncamento, non a occhio: con 12000 caratteri il
+  // modello saturava il tetto di token in 2 segmenti su 2, con 9000 in 1 su 3.
+  // A 7500 il numero di segmenti resta lo stesso ma ognuno ha meno da coprire.
+  chunkChars: 7500,
   concurrency: 2,      // segmenti elaborati in parallelo
   email: 'roberto.micarelli@gmail.com'
 };
