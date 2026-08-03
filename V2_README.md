@@ -54,6 +54,40 @@ trascrizione → segmenti da 12k caratteri
 
 Con un solo segmento il prompt inviato è **identico a quello della v1**, quindi per i video corti l'output non cambia. Oltre il segmento singolo entra in gioco un wrapper che dice al modello quale porzione sta scrivendo e cosa omettere.
 
+### Criterio: leggibilità, non lunghezza
+
+La v1 chiedeva una dispensa "3-4 volte la lunghezza della trascrizione" e nello stesso prompt vietava di inventare contenuti. Due richieste incompatibili: il modello risolveva la tensione **allungando con parafrasi**.
+
+Le direttive sul volume sono state riscritte in direttive di leggibilità, e a ogni prompt viene accodato `CANONE_LEGGIBILITA` (in coda, perché i vincoli finali pesano più di quelli iniziali): densità e non volume, frasi brevi, un'idea per paragrafo, titoli che dicono il contenuto, grassetto solo sui concetti chiave, niente frasi di raccordo vuote.
+
+Effetto misurato sullo stesso video di 19 minuti:
+
+| | Prima | Dopo |
+|---|---|---|
+| Lunghezza | 54.057 car. (30 pagine) | **24.504 car. (14 pagine)** |
+| Rapporto sulla trascrizione | 2,93× | 1,33× |
+| Segmenti troncati | 2/3 | **0/3** |
+| Token in output | 14.958 | **6.042** |
+| Frase media | — | 136 caratteri |
+| Paragrafo medio | — | 284 caratteri (~3-4 righe) |
+| Tempo | 66s | **40s** |
+
+Più corta, più densa, più economica e più veloce. I titoli sono descrittivi ("Perché riconoscere un numero è facile per il cervello e difficile per un programma") invece di etichette generiche.
+
+### Il documento è Markdown convertito, non testo con i cancelletti
+
+Il percorso della v1 (`/api/drive`) crea un documento vuoto, inserisce testo grezzo, lo rilegge, applica gli stili riconoscendo i `#` e poi li cancella. Nel farlo **elimina grassetto e corsivo**:
+
+```javascript
+.replace(/\*\*(.+?)\*\*/g, '$1')  // "verrà riapplicato dopo"  ← mai
+```
+
+Risultato: nessun grassetto, elenchi ridotti a trattini letterali, citazioni col `>` in chiaro, tutto in Normal text.
+
+`/api/v2/drive` carica invece il documento come `text/markdown` e lascia convertire Drive: **titoli navigabili dal pannello struttura**, grassetto, elenchi puntati e numerati veri, citazioni. Una sola richiesta invece di quattro. `/api/drive` resta intatto per la v1.
+
+C'è anche `normalizzaMarkdown`, perché il convertitore di Google è severo: un titolo senza riga vuota prima viene assorbito nel paragrafo e resta testo normale coi cancelletti a vista.
+
 ### L'abstract lo produce il backend
 
 La v1 aveva ~250 righe di regex che frugavano nell'output di GPT sperando di ritrovare l'ABSTRACT, con quattro varianti per categoria e tre livelli di fallback. Sono sparite: una chiamata corta e dedicata restituisce il testo, il frontend lo usa così com'è per email e registro.
