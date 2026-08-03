@@ -588,8 +588,10 @@ function renderGoogle() {
 
 async function startGoogleAuth() {
   try {
-    // returnTo: senza questo il callback OAuth rimanda su "/", cioè sulla v1
-    const r = await fetch('/api/auth?action=auth-url&returnTo=%2Fv2');
+    // La 2.0 risponde sia su "/" (ufficiale) sia su "/v2": il callback OAuth
+    // deve riportare sulla stessa pagina da cui è partito il login.
+    const returnTo = /^\/v2\/?$/.test(location.pathname) ? '/v2' : '/';
+    const r = await fetch(`/api/auth?action=auth-url&returnTo=${encodeURIComponent(returnTo)}`);
     if (!r.ok) throw new Error();
     location.href = (await r.json()).authUrl;
   } catch {

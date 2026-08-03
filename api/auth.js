@@ -9,7 +9,7 @@
  * Allowlist chiusa, non una validazione "sembra un path relativo": il valore
  * torna dal redirect di Google e, senza vincoli, sarebbe un open redirect.
  */
-const RETURN_TO_CONSENTITI = ['/', '/v2'];
+const RETURN_TO_CONSENTITI = ['/', '/v2', '/v1'];
 
 const returnToSicuro = (valore) =>
   RETURN_TO_CONSENTITI.includes(valore) ? valore : '/';
