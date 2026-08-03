@@ -104,13 +104,24 @@ Le strategie gratuite restano nel codice: non costano nulla e tornerebbero utili
 
 ### Per sbloccarle
 
-Il codice ha già l'innesto pronto. Su Vercel:
+Il codice ha già l'innesto pronto. Servono tre passaggi:
 
-```
-Settings → Environment Variables → SUPADATA_API_KEY = <la tua chiave>
+1. Registrati su **[supadata.ai](https://supadata.ai)** — piano gratuito da 100 richieste/mese
+2. Copia la API key dalla loro dashboard
+3. Su Vercel: progetto `studia-video-youtube` → **Settings → Environment Variables → Add New**
+   - Name: `SUPADATA_API_KEY`
+   - Value: la chiave
+   - Environments: Production, Preview, Development
+
+Oppure da terminale:
+
+```bash
+npx vercel env add SUPADATA_API_KEY production
 ```
 
-Supadata ha un piano gratuito da 100 richieste/mese, che per il tuo volume potrebbe bastare. Per usare un altro servizio basta riscrivere `viaProvider()` in [api/v2/transcript.mjs](api/v2/transcript.mjs) — una funzione, una ventina di righe.
+**Poi serve un redeploy:** le variabili nuove entrano in vigore solo al deploy successivo.
+
+Per usare un altro servizio basta riscrivere `viaProvider()` in [api/v2/transcript.mjs](api/v2/transcript.mjs) — una funzione, una ventina di righe.
 
 **Senza quella chiave la 2.0 ripiega sulla descrizione, esattamente come la v1** — con la differenza che te lo dice: banner giallo durante l'elaborazione e campo "Fonte testo" nel risultato finale.
 
@@ -164,9 +175,30 @@ Nuove, tutte opzionali:
 | Variabile | Default | A cosa serve |
 |---|---|---|
 | `SUPADATA_API_KEY` | — | sblocca le trascrizioni reali |
+| `OPENAI_MODEL_V2` | `gpt-5.4-mini` | modello per i segmenti — **vedi avvertenza sotto** |
 | `OPENAI_MAX_TOKENS_SECTION` | `4000` | lunghezza massima per segmento; abbassala se vedi timeout |
 | `OPENAI_MODEL_ABSTRACT` | `gpt-4o-mini` | modello per la chiamata corta dell'abstract |
-| `OPENAI_MODEL` | `gpt-4o` | modello per i segmenti (già esistente) |
+
+`OPENAI_MODEL` (che vale `gpt-5.2`) resta usata **solo dalla v1**: la 2.0 la ignora di proposito, così le due versioni non si trascinano a vicenda.
+
+### ⚠️ Prima di cambiare il modello dei segmenti
+
+Benchmark reale sullo stesso task, 4000 `max_completion_tokens`:
+
+| Modello | tok/s | Token di ragionamento | Esito |
+|---|---|---|---|
+| **gpt-5.4-mini** | **157** | 0 | ✅ scelto |
+| gpt-4.1 | 148 | 0 | ok, ma scrive meno |
+| gpt-5.2-chat-latest | 96 | 0 | al limite |
+| gpt-5.2 *(quello della v1)* | 61 | 0 | ❌ timeout |
+| gpt-5.6-sol | 62 | 4000 | ❌ **contenuto vuoto** |
+| gpt-5.5 | 55 | 4000 | ❌ **contenuto vuoto** |
+
+I due modelli più recenti spendono l'intero budget in ragionamento e restituiscono testo vuoto **senza alcun errore HTTP**. Scegliere "il più recente" a occhio produce dispense vuote.
+
+Se cambi modello, misura sempre `usage.completion_tokens_details.reasoning_tokens` prima di metterlo in produzione. Il codice ha comunque una guardia che segnala il caso invece di fallire in silenzio.
+
+Con `gpt-5.4-mini`, un segmento reale da 12k caratteri gira in **~20s** contro i 60 disponibili.
 
 ---
 
